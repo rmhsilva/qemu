@@ -31,6 +31,15 @@ static inline void cpu_mips_tlb_flush (CPUMIPSState *env, int flush_global);
 #endif
 
 /*****************************************************************************/
+/* GDP testing */
+
+void helper_tester(CPUMIPSState *env)
+{
+    printf("helper called!");
+}
+
+
+/*****************************************************************************/
 /* Exceptions processing helpers */
 
 static inline void QEMU_NORETURN do_raise_exception_err(CPUMIPSState *env,

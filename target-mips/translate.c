@@ -25,6 +25,8 @@
 #include "disas/disas.h"
 #include "tcg-op.h"
 
+// First include - creates function prototypes (eg declare helper_xxxx)
+// Second include - generates functions (eg define gen_helper_xxxx)
 #include "helper.h"
 #define GEN_HELPER 1
 #include "helper.h"
@@ -1602,6 +1604,9 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
 
     t0 = tcg_temp_new();
     gen_base_offset_addr(ctx, t0, base, offset);
+
+    // Add our tester?
+    gen_helper_tester(cpu_env);
 
     switch (opc) {
 #if defined(TARGET_MIPS64)
@@ -11738,6 +11743,8 @@ static void decode_micromips32_opc (CPUMIPSState *env, DisasContext *ctx,
         minor = (ctx->opcode >> 12) & 0xf;
         switch (minor) {
         case CACHE:
+            // TODO - eventually we should have code here that
+            // does the required operation on our virtual cache
             check_cp0_enabled(ctx);
             /* Treat as no-op. */
             break;
