@@ -1606,7 +1606,7 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
     gen_base_offset_addr(ctx, t0, base, offset);
 
     // Add our tester?
-    gen_helper_tester(cpu_env);
+    // gen_helper_tester(cpu_env);
 
     switch (opc) {
 #if defined(TARGET_MIPS64)
