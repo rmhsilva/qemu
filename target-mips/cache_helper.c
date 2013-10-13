@@ -32,36 +32,70 @@
 
 // I-cache utility functions:
 
-// static inline void invalidate(unsigned int address)
+static inline void invalidate(CPUMIPSState *env, unsigned int address)
+{
+    unsigned int ind = DECODE_INDEX(address);
+    env->cache->data[ind].valid = 0;
+    env->cache->data[ind].lock = 0;
+}
+
+
+// static void fill_line(CPUMIPSState *env, unsigned int address)
 // {
-//     unsigned int ind = DECODE_INDEX(address);
-//     cache[ind].valid = 0;
-//     cache[ind].lock = 0;
+//     unsigned int index_val = DECODE_INDEX(address);
+
+//     if(env->cache->data[index_val].lock == 0) {   
+//         env->cache->data[index_val].tag = DECODE_TAG(address);
+//         env->cache->data[index_val].valid = 1;
+//     }
+//     else {
+//         printf("Line Locked: %x\n", index_val);
+//     }
 // }
 
-// static inline void load_tag(unsigned int address)
+
+static void hit_miss(CPUMIPSState *env, unsigned int address)
+{
+    unsigned int tag_val = DECODE_TAG(address);
+    unsigned int index_val = DECODE_INDEX(address);
+    unsigned int taglo = env->cache->data[index_val].tag;
+    
+    if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
+        printf("Hit! \n");
+    }
+    else {
+        printf("Miss! \n");
+
+        if(env->cache->data[index_val].lock == 0) {   
+            env->cache->data[index_val].tag = tag_val;
+            env->cache->data[index_val].valid = 1;
+        }
+        else {
+            printf("Line Locked\n");
+        }
+    }
+}
+
+
+// static void fetch_lock(CPUMIPSState *env, unsigned int address)
 // {
-//     taglo = cache[DECODE_INDEX(address)].tag;
+//     env->cache->data[DECODE_INDEX(address)].lock = 1;
 // }
 
-// static inline void store_tag(unsigned int address)
-// {
-//     cache[DECODE_INDEX(address)].tag = taglo;   
-// }
 
-
-// Helpers
+// QEMU Helpers
 
 void helper_tester(CPUMIPSState *env, target_ulong pc)
 {
-    printf("[%x] current tag: %x. Require tag: %x. => ", 
-        pc, env->cache->data[0].tag, DECODE_TAG(pc));
+    printf("[%x] ", pc);
 
-    if (env->cache->data[0].tag != DECODE_TAG(pc)) {
-        env->cache->data[0].tag = DECODE_TAG(pc);
-        printf("miss\n");
-    }
-    else {
-        printf("hit\n");
-    }
+    // if (env->cache->data[0].tag != DECODE_TAG(pc)) {
+    //     env->cache->data[0].tag = DECODE_TAG(pc);
+    //     printf("miss\n");
+    // }
+    // else {
+    //     printf("hit\n");
+    // }
+    
+    hit_miss(env, (unsigned int)pc);
 }
