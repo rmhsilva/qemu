@@ -50,6 +50,21 @@ struct CPUMIPSTLBContext {
 };
 #endif
 
+/**GDP**/
+typedef struct cache_item_t cache_item_t;
+struct cache_item_t {
+    uint_fast32_t tag  : MIPS_CACHE_TAG_WIDTH;
+    uint_fast8_t valid : 1;
+    uint_fast8_t lock  : 1;
+};
+
+typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
+struct CPUMIPSCacheContext {
+    uint32_t taglo;
+    cache_item_t data[1<<MIPS_CACHE_INDEX_WIDTH];
+};
+/**GDP**/
+
 typedef union fpr_t fpr_t;
 union fpr_t {
     float64  fd;   /* ieee double precision */
@@ -473,6 +488,8 @@ struct CPUMIPSState {
 #if !defined(CONFIG_USER_ONLY)
     CPUMIPSTLBContext *tlb;
 #endif
+
+    CPUMIPSCacheContext *cache; /**GDP**/
 
     const mips_def_t *cpu_model;
     void *irq[8];

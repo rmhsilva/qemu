@@ -114,3 +114,4 @@ cscope.*
 tags
 TAGS
 *~
+target-mips/syncdir

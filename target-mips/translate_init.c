@@ -643,3 +643,12 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
                              (0x0 << CP0MVPC1_PCX) | (0x0 << CP0MVPC1_PCP2) |
                              (0x1 << CP0MVPC1_PCP1);
 }
+
+
+/**GDP**/
+static void cache_init (CPUMIPSState *env, const mips_def_t *def)
+{
+    // Currently we just need to allocate the memory...
+    env->cache = g_malloc0(sizeof(CPUMIPSCacheContext));
+}
+/**GDP**/

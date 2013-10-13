@@ -1605,9 +1605,6 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
     t0 = tcg_temp_new();
     gen_base_offset_addr(ctx, t0, base, offset);
 
-    // Add our tester?
-    // gen_helper_tester(cpu_env);
-
     switch (opc) {
 #if defined(TARGET_MIPS64)
     case OPC_LWU:
@@ -11743,8 +11740,6 @@ static void decode_micromips32_opc (CPUMIPSState *env, DisasContext *ctx,
         minor = (ctx->opcode >> 12) & 0xf;
         switch (minor) {
         case CACHE:
-            // TODO - eventually we should have code here that
-            // does the required operation on our virtual cache
             check_cp0_enabled(ctx);
             /* Treat as no-op. */
             break;
@@ -14394,6 +14389,9 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
         return;
     }
 
+    // Add our tester?
+    gen_helper_0e0i(tester, ctx->pc);
+
     /* Handle blikely not taken case */
     if ((ctx->hflags & MIPS_HFLAG_BMASK_BASE) == MIPS_HFLAG_BL) {
         int l1 = gen_new_label();
@@ -15406,6 +15404,8 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
         check_cp0_enabled(ctx);
         check_insn(ctx, ISA_MIPS3 | ISA_MIPS32);
         /* Treat as NOP. */
+        // TODO - eventually we should have code here that
+        // does the required operation on our virtual cache
         break;
     case OPC_PREF:
         check_insn(ctx, ISA_MIPS4 | ISA_MIPS32);
@@ -15921,6 +15921,8 @@ MIPSCPU *cpu_mips_init(const char *cpu_model)
 #endif
     fpu_init(env, def);
     mvp_init(env, def);
+
+    cache_init(env, def); /**GDP**/
 
     object_property_set_bool(OBJECT(cpu), true, "realized", NULL);
 
