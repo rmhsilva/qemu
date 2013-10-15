@@ -2191,6 +2191,54 @@ static void gen_shift_imm(DisasContext *ctx, uint32_t opc,
     tcg_temp_free(t0);
 }
 
+/**GDP**/
+/* Cache operations */
+static void gen_cache_op(DisasContext *ctx, uint32_t opc, 
+                            int op, int base, int16_t offset)
+{
+    unsigned int addr = base + offset;
+
+    switch(op & 0x03) {             // Switch on cache selection bits
+        case 0: // I-Cache
+            switch(op & 0x1C) {     // And now on operation bits
+                case 0:
+                    gen_helper_0e0i(cache_invalidate, addr);
+                break;
+                case 1:
+                    gen_helper_0e0i(cache_load_tag, addr);
+                break;
+                case 2:
+                    gen_helper_0e0i(cache_store_tag, addr);
+                break;
+                case 4:
+                    gen_helper_0e0i(cache_hit_invalidate, addr);
+                break;
+                case 5:
+                    gen_helper_0e0i(cache_fill, addr);
+                break;
+                case 7:
+                    gen_helper_0e0i(cache_fetch_lock, addr);
+                break;
+                case 6: // No-op for writethrough cache!
+                case 3: // Optional
+                default:
+                break;
+            }
+        break;
+
+        case 1: // D-Cache
+        break;
+
+        case 3: // L2 Cache
+        break;
+
+        case 2: // L3: No-op
+        default:
+        break;
+    }
+}
+/**GDP**/
+
 /* Arithmetic */
 static void gen_arith(DisasContext *ctx, uint32_t opc,
                       int rd, int rs, int rt)
@@ -14390,7 +14438,7 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
     }
 
     // Add our tester?
-    gen_helper_0e0i(tester, ctx->pc);
+    gen_helper_0e0i(icache, ctx->pc);
 
     /* Handle blikely not taken case */
     if ((ctx->hflags & MIPS_HFLAG_BMASK_BASE) == MIPS_HFLAG_BL) {
@@ -15403,9 +15451,9 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
     case OPC_CACHE:
         check_cp0_enabled(ctx);
         check_insn(ctx, ISA_MIPS3 | ISA_MIPS32);
-        /* Treat as NOP. */
-        // TODO - eventually we should have code here that
-        // does the required operation on our virtual cache
+        /**GDP**/
+        // rs=>base, rt=>op, imm=>offset
+        gen_cache_op(ctx, op, rt, rs, imm);
         break;
     case OPC_PREF:
         check_insn(ctx, ISA_MIPS4 | ISA_MIPS32);

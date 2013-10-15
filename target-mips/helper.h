@@ -3,8 +3,15 @@
 DEF_HELPER_3(raise_exception_err, noreturn, env, i32, int)
 DEF_HELPER_2(raise_exception, noreturn, env, i32)
 
-// GDP - tester function:
-DEF_HELPER_2(tester, void, env, tl)
+/**GDP**/
+DEF_HELPER_2(icache, void, env, tl)
+DEF_HELPER_2(cache_invalidate, void, env, i32)
+DEF_HELPER_2(cache_load_tag, void, env, i32)
+DEF_HELPER_2(cache_store_tag, void, env, i32)
+DEF_HELPER_2(cache_hit_invalidate, void, env, i32)
+DEF_HELPER_2(cache_fill, void, env, i32)
+DEF_HELPER_2(cache_fetch_lock, void, env, i32)
+/**GDP**/
 
 #ifdef TARGET_MIPS64
 DEF_HELPER_4(sdl, void, env, tl, tl, int)

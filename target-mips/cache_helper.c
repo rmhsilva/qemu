@@ -28,6 +28,7 @@
 
 #define DECODE_INDEX(addr) (((addr) & (MIPS_CACHE_INDEX_MASK)) >> MIPS_CACHE_INDEX_SHIFT)
 #define DECODE_TAG(addr) ((addr) >> MIPS_CACHE_TAG_SHIFT)
+#define DECODE_OFFSET(addr) ((addr & (MIPS_CACHE_OFFSET_MASK)) >> MIPS_CACHE_OFFSET_SHIFT)
 
 
 // I-cache utility functions:
@@ -40,31 +41,33 @@ static inline void invalidate(CPUMIPSState *env, unsigned int address)
 }
 
 
-// static void fill_line(CPUMIPSState *env, unsigned int address)
-// {
-//     unsigned int index_val = DECODE_INDEX(address);
+static void fill_line(CPUMIPSState *env, unsigned int address)
+{
+    unsigned int index_val = DECODE_INDEX(address);
 
-//     if(env->cache->data[index_val].lock == 0) {   
-//         env->cache->data[index_val].tag = DECODE_TAG(address);
-//         env->cache->data[index_val].valid = 1;
-//     }
-//     else {
-//         printf("Line Locked: %x\n", index_val);
-//     }
-// }
+    if (env->cache->data[index_val].lock == 0) {
+        env->cache->data[index_val].tag = DECODE_TAG(address);
+        env->cache->data[index_val].valid = 1;
+    }
+    else {
+        printf("Line Locked: %x\n", index_val);
+    }
+}
 
 
-static void hit_miss(CPUMIPSState *env, unsigned int address)
+inline static void hit_miss(CPUMIPSState *env, unsigned int address)
 {
     unsigned int tag_val = DECODE_TAG(address);
     unsigned int index_val = DECODE_INDEX(address);
     unsigned int taglo = env->cache->data[index_val].tag;
     
     if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
-        printf("Hit! \n");
+        printf("Hit:  tag[%x], idx[%x], offset[%x]! \n",
+            tag_val, index_val, DECODE_OFFSET(address));
     }
     else {
-        printf("Miss! \n");
+        printf("Miss: tag[%x], idx[%x], offset[%x]! \n",
+            tag_val, index_val, DECODE_OFFSET(address));
 
         if(env->cache->data[index_val].lock == 0) {   
             env->cache->data[index_val].tag = tag_val;
@@ -77,25 +80,62 @@ static void hit_miss(CPUMIPSState *env, unsigned int address)
 }
 
 
-// static void fetch_lock(CPUMIPSState *env, unsigned int address)
-// {
-//     env->cache->data[DECODE_INDEX(address)].lock = 1;
-// }
+inline static void hit_invalidate(CPUMIPSState *env, unsigned int address)
+{
+    unsigned int tag_val = DECODE_TAG(address);
+    unsigned int index_val = DECODE_INDEX(address);
+    unsigned int taglo = env->cache->data[index_val].tag;
+
+    if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
+        invalidate(env, address);
+    }
+}
 
 
+static void fetch_lock(CPUMIPSState *env, unsigned int address)
+{
+    fill_line(env, address);
+    env->cache->data[DECODE_INDEX(address)].lock = 1;
+}
+
+
+/*****************************************************************************/
 // QEMU Helpers
 
-void helper_tester(CPUMIPSState *env, target_ulong pc)
+void helper_icache(CPUMIPSState *env, target_ulong pc)
 {
     printf("[%x] ", pc);
-
-    // if (env->cache->data[0].tag != DECODE_TAG(pc)) {
-    //     env->cache->data[0].tag = DECODE_TAG(pc);
-    //     printf("miss\n");
-    // }
-    // else {
-    //     printf("hit\n");
-    // }
     
     hit_miss(env, (unsigned int)pc);
+}
+
+void helper_cache_invalidate(CPUMIPSState *env, unsigned int addr)
+{
+    invalidate(env, addr);
+}
+
+void helper_cache_load_tag(CPUMIPSState *env, unsigned int addr)
+{
+    // TODO - what about TagHi?
+    env->CP0_TagLo = env->cache->data[DECODE_INDEX(addr)].tag;
+}
+
+void helper_cache_store_tag(CPUMIPSState *env, unsigned int addr)
+{
+    env->cache->data[DECODE_INDEX(addr)].tag = env->CP0_TagLo;
+}
+
+void helper_cache_hit_invalidate(CPUMIPSState *env, unsigned int addr)
+{
+    hit_invalidate(env, addr);
+}
+
+void helper_cache_fill(CPUMIPSState *env, unsigned int addr)
+{
+    fill_line(env, addr);
+}
+
+void helper_cache_fetch_lock(CPUMIPSState *env, unsigned int addr)
+{
+    fetch_lock(env, addr);
 }
