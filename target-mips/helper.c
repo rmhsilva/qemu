@@ -266,6 +266,20 @@ hwaddr mips_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
     }
     return phys_addr;
 }
+
+/*GDP*/
+hwaddr get_phys_addr_cache(CPUMIPSState *env, target_ulong addr)
+{
+    hwaddr phys_addr;
+    int prot;
+
+    if (get_physical_address(env, &phys_addr, &prot, addr, 0,
+                             ACCESS_INT) != 0) {
+        return -1;
+    }
+    return phys_addr;
+}
+
 #endif
 
 int cpu_mips_handle_mmu_fault (CPUMIPSState *env, target_ulong address, int rw,

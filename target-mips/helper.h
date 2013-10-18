@@ -4,6 +4,9 @@ DEF_HELPER_3(raise_exception_err, noreturn, env, i32, int)
 DEF_HELPER_2(raise_exception, noreturn, env, i32)
 
 /**GDP**/
+#ifndef CONFIG_USER_ONLY
+DEF_HELPER_2(dcache, void, env, tl)
+#endif
 DEF_HELPER_2(icache, void, env, tl)
 DEF_HELPER_2(cache_invalidate, void, env, i32)
 DEF_HELPER_2(cache_load_tag, void, env, i32)

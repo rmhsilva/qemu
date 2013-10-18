@@ -670,6 +670,9 @@ void cpu_mips_stop_count(CPUMIPSState *env);
 void cpu_mips_soft_irq(CPUMIPSState *env, int irq, int level);
 
 /* helper.c */
+#if !defined(CONFIG_USER_ONLY)
+hwaddr get_phys_addr_cache(CPUMIPSState *env, target_ulong addr);
+#endif
 int cpu_mips_handle_mmu_fault (CPUMIPSState *env, target_ulong address, int rw,
                                int mmu_idx);
 #define cpu_handle_mmu_fault cpu_mips_handle_mmu_fault
