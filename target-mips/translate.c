@@ -14459,7 +14459,7 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
     }
 
     // Add our tester?
-    //gen_helper_0e0i(icache, ctx->pc);
+    gen_helper_0e0i(icache, ctx->pc);  /**GDP**/// : Cache helper
 
     /* Handle blikely not taken case */
     if ((ctx->hflags & MIPS_HFLAG_BMASK_BASE) == MIPS_HFLAG_BL) {

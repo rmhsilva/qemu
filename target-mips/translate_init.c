@@ -648,7 +648,19 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 /**GDP**/
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
-    // Currently we just need to allocate the memory...
+    const char *logfile = "./log2.bin";
+
+    // allocate the memory...
     env->cache = g_malloc0(sizeof(CPUMIPSCacheContext));
+
+    FILE *fd = fopen(logfile, "wb");
+
+    if (fd) {
+        printf("Opened logfile: %s\n", logfile);
+        env->cache->logfile = fd;
+    }
+    else {
+        fprintf(stderr, ":( Error opening logfile: %s\n", logfile);
+    }
 }
 /**GDP**/

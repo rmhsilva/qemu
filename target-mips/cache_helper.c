@@ -59,7 +59,7 @@ static inline void invalidate(CPUMIPSState *env, unsigned int address)
 }
 
 
-static void fill_line(CPUMIPSState *env, unsigned int address)
+static inline void fill_line(CPUMIPSState *env, unsigned int address)
 {
     unsigned int index_val = DECODE_INDEX(address);
 
@@ -73,32 +73,36 @@ static void fill_line(CPUMIPSState *env, unsigned int address)
 }
 
 
-inline static void hit_miss(CPUMIPSState *env, unsigned int address)
+static inline void hit_miss(CPUMIPSState *env, unsigned int address)
 {
     unsigned int tag_val = DECODE_TAG(address);
     unsigned int index_val = DECODE_INDEX(address);
     unsigned int taglo = env->cache->data[index_val].tag;
+    unsigned int log_data[] = {address, 0};
     
     if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
-        printf("Hit:  tag[%x], idx[%x], offset[%x]! \n",
-            tag_val, index_val, DECODE_OFFSET(address));
+        // printf("Hit:  tag[%x], idx[%x], offset[%x]! \n",
+        //     tag_val, index_val, DECODE_OFFSET(address));
+        log_data[1] = 1;
     }
     else {
-        printf("Miss: tag[%x], idx[%x], offset[%x]! \n",
-            tag_val, index_val, DECODE_OFFSET(address));
+        // printf("Miss: tag[%x], idx[%x], offset[%x]! \n",
+        //     tag_val, index_val, DECODE_OFFSET(address));
 
         if(env->cache->data[index_val].lock == 0) {   
             env->cache->data[index_val].tag = tag_val;
             env->cache->data[index_val].valid = 1;
         }
         else {
-            printf("Line Locked\n");
+            printf("Line Locked!!\n");
+            log_data[1] = 2;
         }
     }
+    fwrite(log_data, sizeof(unsigned int), 2, env->cache->logfile);
 }
 
 
-inline static void hit_invalidate(CPUMIPSState *env, unsigned int address)
+static inline void hit_invalidate(CPUMIPSState *env, unsigned int address)
 {
     unsigned int tag_val = DECODE_TAG(address);
     unsigned int index_val = DECODE_INDEX(address);
@@ -110,7 +114,7 @@ inline static void hit_invalidate(CPUMIPSState *env, unsigned int address)
 }
 
 
-static void fetch_lock(CPUMIPSState *env, unsigned int address)
+static inline void fetch_lock(CPUMIPSState *env, unsigned int address)
 {
     fill_line(env, address);
     env->cache->data[DECODE_INDEX(address)].lock = 1;
@@ -122,7 +126,10 @@ static void fetch_lock(CPUMIPSState *env, unsigned int address)
 
 void helper_icache(CPUMIPSState *env, target_ulong pc)
 {
-    printf("[%x] ", pc);
+    // printf("[%x] ", pc);
+    // static uint x = 0;
+    // fwrite(&x, sizeof(uint), 1, env->cache->logfile);
+    // x++;
     
     hit_miss(env, (unsigned int)pc);
 }
