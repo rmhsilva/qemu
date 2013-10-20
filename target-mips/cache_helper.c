@@ -18,12 +18,38 @@
  */
 #include <stdlib.h>
 #include "cpu.h"
-// #include "qemu/host-utils.h"  // Probably don't need this
-
 #include "helper.h"
+
 /* Macros for displaying uint64t */
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+typedef struct logdata_t logdata_t;
+struct logdata_t {
+    uint32_t address;
+    uint8_t not_used;
+    uint8_t is_load;
+    uint8_t opcode;
+    uint8_t is_hit;
+};
+
+/*****************************************************************************/
+/* Misc Helpers */
+
+static void log_data(CPUMIPSState *env,
+    uint32_t addr, uint8_t is_hit, uint8_t opcode, uint32_t is_load)
+{
+    logdata_t log_data = {
+        .address = addr,
+        .opcode = opcode,
+        .is_hit = is_hit,
+        .is_load = is_load,
+    };
+    
+    fwrite(&log_data, sizeof(logdata_t), 1, env->cache->logfile);
+    // printf("[%x]: %d, Opcode: %x, Load: %d\n", addr, is_hit, opcode, is_load);
+}
+
 
 /*****************************************************************************/
 /* GDP */
@@ -32,30 +58,32 @@
 #define DECODE_TAG(addr) ((addr) >> MIPS_CACHE_TAG_SHIFT)
 #define DECODE_OFFSET(addr) ((addr & (MIPS_CACHE_OFFSET_MASK)) >> MIPS_CACHE_OFFSET_SHIFT)
 
-#ifndef CONFIG_USER_ONLY
-// D-cache test:
-void helper_dcache(CPUMIPSState *env, target_ulong addr)
-{
-    hwaddr phys_address;
-    phys_address = get_phys_addr_cache(env, addr);
+// #ifndef CONFIG_USER_ONLY
+// // D-cache test:
+// void helper_dcache(CPUMIPSState *env, target_ulong addr)
+// {
+//     hwaddr phys_address;
+//     phys_address = get_phys_addr_cache(env, addr);
     
-   fprintf(stderr,"VA: [%x] PA: %" PRIx64 "\n", addr,phys_address);
+//     fprintf(stderr,"VA: [%x] PA: %" PRIx64 "\n", addr,phys_address);
 
-#if TARGET_LONG_BITS == 32
-    //printf("LD PA: %" PRId64 "\n", phys_address);
-#else
-   // printf("LD PA: %" PRId64 "\n", phys_address);
-#endif
+// #if TARGET_LONG_BITS == 32
+//     //printf("LD PA: %" PRId64 "\n", phys_address);
+// #else
+//    // printf("LD PA: %" PRId64 "\n", phys_address);
+// #endif
 
-}
-#endif
+// }
+// #endif
+
+
 // I-cache utility functions:
 
 static inline void invalidate(CPUMIPSState *env, unsigned int address)
 {
     unsigned int ind = DECODE_INDEX(address);
-    env->cache->data[ind].valid = 0;
-    env->cache->data[ind].lock = 0;
+    env->cache->icache[ind].valid = 0;
+    env->cache->icache[ind].lock = 0;
 }
 
 
@@ -63,9 +91,9 @@ static inline void fill_line(CPUMIPSState *env, unsigned int address)
 {
     unsigned int index_val = DECODE_INDEX(address);
 
-    if (env->cache->data[index_val].lock == 0) {
-        env->cache->data[index_val].tag = DECODE_TAG(address);
-        env->cache->data[index_val].valid = 1;
+    if (env->cache->icache[index_val].lock == 0) {
+        env->cache->icache[index_val].tag = DECODE_TAG(address);
+        env->cache->icache[index_val].valid = 1;
     }
     else {
         printf("Line Locked: %x\n", index_val);
@@ -73,32 +101,31 @@ static inline void fill_line(CPUMIPSState *env, unsigned int address)
 }
 
 
-static inline void hit_miss(CPUMIPSState *env, unsigned int address)
+/**
+ * access_cache: An interface to either a data cache or instruction cache.
+ * @param  *cache  Pointer to the cache memory
+ * @param  address Address to access
+ * @return         0: miss, 1: hit
+ */
+static inline uint8_t access_cache(cache_item_t *cache, uint32_t address)
 {
-    unsigned int tag_val = DECODE_TAG(address);
-    unsigned int index_val = DECODE_INDEX(address);
-    unsigned int taglo = env->cache->data[index_val].tag;
-    unsigned int log_data[] = {address, 0};
+    uint32_t tag_val = DECODE_TAG(address);
+    uint32_t index_val = DECODE_INDEX(address);
+    uint32_t taglo = cache[index_val].tag;
     
-    if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
-        // printf("Hit:  tag[%x], idx[%x], offset[%x]! \n",
-        //     tag_val, index_val, DECODE_OFFSET(address));
-        log_data[1] = 1;
+    if ((taglo==tag_val) && (cache[index_val].valid==1)) {
+        return 1;
     }
     else {
-        // printf("Miss: tag[%x], idx[%x], offset[%x]! \n",
-        //     tag_val, index_val, DECODE_OFFSET(address));
-
-        if(env->cache->data[index_val].lock == 0) {   
-            env->cache->data[index_val].tag = tag_val;
-            env->cache->data[index_val].valid = 1;
+        if(cache[index_val].lock == 0) {   
+            cache[index_val].tag = tag_val;
+            cache[index_val].valid = 1;
         }
         else {
             printf("Line Locked!!\n");
-            log_data[1] = 2;
         }
+        return 0;
     }
-    fwrite(log_data, sizeof(unsigned int), 2, env->cache->logfile);
 }
 
 
@@ -106,9 +133,9 @@ static inline void hit_invalidate(CPUMIPSState *env, unsigned int address)
 {
     unsigned int tag_val = DECODE_TAG(address);
     unsigned int index_val = DECODE_INDEX(address);
-    unsigned int taglo = env->cache->data[index_val].tag;
+    unsigned int taglo = env->cache->icache[index_val].tag;
 
-    if((taglo==tag_val) && (env->cache->data[index_val].valid==1)) {
+    if((taglo==tag_val) && (env->cache->icache[index_val].valid==1)) {
         invalidate(env, address);
     }
 }
@@ -117,22 +144,34 @@ static inline void hit_invalidate(CPUMIPSState *env, unsigned int address)
 static inline void fetch_lock(CPUMIPSState *env, unsigned int address)
 {
     fill_line(env, address);
-    env->cache->data[DECODE_INDEX(address)].lock = 1;
+    env->cache->icache[DECODE_INDEX(address)].lock = 1;
 }
 
 
 /*****************************************************************************/
 // QEMU Helpers
 
-void helper_icache(CPUMIPSState *env, target_ulong pc)
-{
-    // printf("[%x] ", pc);
-    // static uint x = 0;
-    // fwrite(&x, sizeof(uint), 1, env->cache->logfile);
-    // x++;
-    
-    hit_miss(env, (unsigned int)pc);
+void helper_icache(CPUMIPSState *env, target_ulong pc, unsigned int opcode)
+{    
+    uint8_t hit = access_cache(env->cache->icache, (uint32_t)pc);
+
+    // uint32_t addr, uint8_t is_hit, uint8_t opcode, uint32_t is_load
+    log_data(env, (uint32_t)pc, hit, ((opcode >> 26) & 0x3F), 0);
 }
+
+#ifndef CONFIG_USER_ONLY
+void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load) 
+{
+    // if is_load is 0 then it is a store instruction
+    
+    hwaddr phys_address = (uint32_t)get_phys_addr_cache(env, addr);
+    uint8_t hit = access_cache(env->cache->dcache, phys_address);
+    
+    // TODO: dirty bit etc
+
+    log_data(env, phys_address, hit, 0xFF, is_load);
+}
+#endif
 
 void helper_cache_invalidate(CPUMIPSState *env, unsigned int addr)
 {
@@ -142,12 +181,12 @@ void helper_cache_invalidate(CPUMIPSState *env, unsigned int addr)
 void helper_cache_load_tag(CPUMIPSState *env, unsigned int addr)
 {
     // TODO - what about TagHi?
-    env->CP0_TagLo = env->cache->data[DECODE_INDEX(addr)].tag;
+    env->CP0_TagLo = env->cache->icache[DECODE_INDEX(addr)].tag;
 }
 
 void helper_cache_store_tag(CPUMIPSState *env, unsigned int addr)
 {
-    env->cache->data[DECODE_INDEX(addr)].tag = env->CP0_TagLo;
+    env->cache->icache[DECODE_INDEX(addr)].tag = env->CP0_TagLo;
 }
 
 void helper_cache_hit_invalidate(CPUMIPSState *env, unsigned int addr)

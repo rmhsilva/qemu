@@ -1608,7 +1608,7 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
 /*GDP*/
 #ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
-   // gen_helper_dcache(cpu_env, t0);
+   gen_helper_dcache(cpu_env, t0, 1);
 #else
    // gen_helper_dcache(cpu_env, t0);
 #endif
@@ -1780,20 +1780,19 @@ static void gen_st (DisasContext *ctx, uint32_t opc, int rt,
     TCGv t0 = tcg_temp_new();
     TCGv t1 = tcg_temp_new();
 
-  //  printf("before: %x .", GET_TCGV_I32(t0));
     gen_base_offset_addr(ctx, t0, base, offset);
-   // printf("VA: %x %x [%x %x] \n",base,offset,GET_TCGV_I32(t0),ctx->mem_idx);
-/*GDP*/
+
+/**GDP**/
 #ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
-    gen_helper_dcache(cpu_env, t0);
+    gen_helper_dcache(cpu_env, t0, 0);
 #else
-    //gen_helper_dcache(cpu_env, t0);
+    // gen_helper_dcache(cpu_env, t0);
 #endif
-#endif     
+#endif
+
     gen_load_gpr(t1, rt);
 
-   // printf("before: %x .", GET_TCGV_I32(t0));
     switch (opc) {
 #if defined(TARGET_MIPS64)
     case OPC_SD:
@@ -14458,8 +14457,12 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
         return;
     }
 
-    // Add our tester?
-    gen_helper_0e0i(icache, ctx->pc);  /**GDP**/// : Cache helper
+    /**GDP**/// : Cache helper
+    TCGv_i32 helper_pc = tcg_const_i32(ctx->pc);
+    TCGv_i32 helper_opcode = tcg_const_i32(ctx->opcode);
+    gen_helper_icache(cpu_env, helper_pc, helper_opcode);
+    tcg_temp_free_i32(helper_opcode);
+    tcg_temp_free_i32(helper_pc);
 
     /* Handle blikely not taken case */
     if ((ctx->hflags & MIPS_HFLAG_BMASK_BASE) == MIPS_HFLAG_BL) {

@@ -61,7 +61,8 @@ struct cache_item_t {
 typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
 struct CPUMIPSCacheContext {
     // uint32_t taglo;
-    cache_item_t data[1<<MIPS_CACHE_INDEX_WIDTH];
+    cache_item_t icache[1<<MIPS_CACHE_INDEX_WIDTH];
+    cache_item_t dcache[1<<MIPS_CACHE_INDEX_WIDTH];
     FILE *logfile;
 };
 /**GDP**/
