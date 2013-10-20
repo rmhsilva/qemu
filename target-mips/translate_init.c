@@ -649,7 +649,7 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
     const char *logfile = "./log.bin";
-
+    
     // allocate the memory...
     env->cache = g_malloc0(sizeof(CPUMIPSCacheContext));
 

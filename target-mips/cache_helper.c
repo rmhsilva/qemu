@@ -24,13 +24,13 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+// Macro to fill the info bitfields for logging (opcode, is_hit, is_load)
+#define FILL_INFO(o,h,l) (o | (h<<6) | (l<<7))
+
 typedef struct logdata_t logdata_t;
 struct logdata_t {
     uint32_t address;
-    uint8_t not_used;
-    uint8_t is_load;
-    uint8_t opcode;
-    uint8_t is_hit;
+    uint8_t info;
 };
 
 /*****************************************************************************/
@@ -41,12 +41,10 @@ static void log_data(CPUMIPSState *env,
 {
     logdata_t log_data = {
         .address = addr,
-        .opcode = opcode,
-        .is_hit = is_hit,
-        .is_load = is_load,
+        .info    = FILL_INFO(opcode, is_hit, is_load)
     };
-    
-    fwrite(&log_data, sizeof(logdata_t), 1, env->cache->logfile);
+
+    fwrite(&log_data, (size_t)5, 1, env->cache->logfile);
     // printf("[%x]: %d, Opcode: %x, Load: %d\n", addr, is_hit, opcode, is_load);
 }
 
