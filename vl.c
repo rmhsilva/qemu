@@ -182,9 +182,6 @@ int main(int argc, char **argv)
 #define MAX_VIRTIO_CONSOLES 1
 #define MAX_SCLP_CONSOLES 1
 
-/* GDP cache options struct MIPS */
-struct MipsCacheOpts mips_cache_opts = {"","","",0};
-
 static const char *data_dir[16];
 static int data_dir_idx;
 const char *bios_name = NULL;
@@ -2981,10 +2978,13 @@ int main(int argc, char **argv, char **envp)
             /* GDP MIPS cache size options */
             case QEMU_OPTION_dcache:
                 printf("%s %s\n",popt->name,optarg);
-                mips_cache_opts.use_d = 1;
                 pstrcpy(mips_cache_opts.d_opt,10,optarg);
-                
-               // strcmp
+                if(proc_mips_cache_opt('d',optarg))
+                {
+                    /* Error in processing option argument */
+                    exit(1);
+                }
+                printf("%u %u %c\n",mips_cache_opts.d_offset_width, mips_cache_opts.d_index_width, mips_cache_opts.d_type );
                 break;
 
             case QEMU_OPTION_M:
