@@ -4,6 +4,11 @@
 /* Pointer to a file is used to dump cache performance info */
 
 struct MipsCacheOpts {
+
+    char d_opt[10];
+    char i_opt[10];
+    char l2_opt[10];
+
     unsigned char use_d;
     unsigned char use_i;
     unsigned char use_l2;
@@ -24,4 +29,6 @@ struct MipsCacheOpts {
 };
 
 extern struct MipsCacheOpts mips_cache_opts;
+
+
 
