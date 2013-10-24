@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 #define MAX_SCLP_CONSOLES 1
 
 /* GDP cache options struct MIPS */
-struct MipsCacheOpts mips_cache_opts;
+struct MipsCacheOpts mips_cache_opts = {"","","",0};
 
 static const char *data_dir[16];
 static int data_dir_idx;
@@ -2977,6 +2977,16 @@ int main(int argc, char **argv, char **envp)
                 exit(1);
             }
             switch(popt->index) {
+
+            /* GDP MIPS cache size options */
+            case QEMU_OPTION_dcache:
+                printf("%s %s\n",popt->name,optarg);
+                mips_cache_opts.use_d = 1;
+                pstrcpy(mips_cache_opts.d_opt,10,optarg);
+                
+               // strcmp
+                break;
+
             case QEMU_OPTION_M:
                 machine = machine_parse(optarg);
                 break;

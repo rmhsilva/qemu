@@ -3,6 +3,14 @@
 /* Sizes are set up in vl.c using command line arguments */
 /* Pointer to a file is used to dump cache performance info */
 
+/* Cache types:
+ * '2' - two way associative 
+ * '4' - four way associative
+ * 'd' - direct-mapped */
+
+#ifndef MIPS_CACHE_OPTS
+#define MIPS_CACHE_OPTS
+
 struct MipsCacheOpts {
 
     char d_opt[10];
@@ -30,5 +38,6 @@ struct MipsCacheOpts {
 
 extern struct MipsCacheOpts mips_cache_opts;
 
+#endif
 
 
