@@ -8,6 +8,9 @@
  * '4' - four way associative
  * 'd' - direct-mapped */
 
+/* offset_width includes LSBs which address bytes in a word */
+/* index_mask is a mask after shifting address by offset_width to the right */
+
 #ifndef MIPS_CACHE_OPTS
 #define MIPS_CACHE_OPTS
 
@@ -21,17 +24,23 @@ struct MipsCacheOpts {
     unsigned char use_i;
     unsigned char use_l2;
 
-    unsigned int d_line_size;
     unsigned int d_no_of_lines;
     unsigned char d_type;
+    unsigned int d_offset_width;
+    unsigned int d_index_width;
+    unsigned int d_index_mask;
 
-    unsigned int i_line_size;
     unsigned int i_no_of_lines;
     unsigned char i_type;
+    unsigned int i_offset_width;
+    unsigned int i_index_width;
+    unsigned int i_index_mask;    
 
-    unsigned int l2_line_size;
     unsigned int l2_no_of_lines;
     unsigned char l2_type;
+    unsigned int l2_offset_width;
+    unsigned int l2_index_width;
+    unsigned int l2_index_mask; 
 
     FILE *perf_dump;  
 };
