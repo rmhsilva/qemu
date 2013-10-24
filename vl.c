@@ -171,6 +171,9 @@ int main(int argc, char **argv)
 #include "ui/qemu-spice.h"
 #include "qapi/string-input-visitor.h"
 
+/* GDP MIPS cache configuration */
+#include "target-mips/mips-cache-opts.h"
+
 //#define DEBUG_NET
 //#define DEBUG_SLIRP
 
@@ -178,6 +181,9 @@ int main(int argc, char **argv)
 
 #define MAX_VIRTIO_CONSOLES 1
 #define MAX_SCLP_CONSOLES 1
+
+/* GDP cache options struct MIPS */
+struct MipsCacheOpts mips_cache_opts;
 
 static const char *data_dir[16];
 static int data_dir_idx;
@@ -2820,6 +2826,7 @@ static int object_create(QemuOpts *opts, void *opaque)
 
 int main(int argc, char **argv, char **envp)
 {
+
     int i;
     int snapshot, linux_boot;
     const char *icount_option = NULL;
@@ -2852,6 +2859,12 @@ int main(int argc, char **argv, char **envp)
     };
     const char *trace_events = NULL;
     const char *trace_file = NULL;
+
+    /*GDP argument test*/
+    for(i = 0; i < argc; i = i + 1)
+    {
+        fprintf(stderr,"Arg no %d %s \n",i,argv[i]);
+    }
 
     atexit(qemu_run_exit_notifiers);
     error_set_progname(argv[0]);

@@ -3116,6 +3116,73 @@ STEXI
 prepend a timestamp to each log message.(default:on)
 ETEXI
 
+STEXI
+@end table
+ETEXI
+DEFHEADING()
+
+DEFHEADING(MIPS cache options:)
+STEXI
+@table @option
+ETEXI
+
+HXCOMM GDP MIPS definitions start
+
+DEF("dcache", HAS_ARG, QEMU_OPTION_dcache,
+    "-dcache nxm_tp     specify data cache size e.g.:\n"
+    "                   -dcache 1x128_dm where n - no. of words in a cache line\n"
+    "                   m - no. of lines, tp - cache type)\n",
+    QEMU_ARCH_MIPS)
+STEXI
+@item -dcache @var{nxm_tp}
+@findex -dcache
+Specify cache size @var{nxm_tp} (for example @code{1x128_dm} for
+a direct-mapped cache with 1 word in a cache line and 128 lines). nxm_tp means:
+n - number of words in a cache line, m - number of cache lines, tp - cache type.
+If you do not use this option, cache will not be used.
+
+The available options are:
+
+2kB:
+@example
+1x512_dm 2x256_dm 4x128_dm 8x64_dm
+1x512_2w 2x256_2w 4x128_2w 8x64_2w
+1x512_4w 2x256_4w 4x128_4w 8x64_4w
+@end example
+4kB:
+@example
+1x1024_dm 2x512_dm 4x256_dm 8x128_dm
+1x1024_2w 2x512_2w 4x256_2w 8x128_2w
+1x1024_4w 2x512_4w 4x256_4w 8x128_4w
+@end example
+8kB:
+@example
+1x2048_dm 2x1024_dm 4x512_dm 8x256_dm
+1x2048_2w 2x1024_2w 4x512_2w 8x256_2w
+1x2048_4w 2x1024_4w 4x512_4w 8x256_4w
+@end example
+16kB:
+@example
+1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm
+1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w
+1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w
+@end example
+32kB:
+@example
+1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm
+1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w
+1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w
+@end example
+where
+dm - direct mapped cache,
+2w - two-way associative cache,
+4w - four-way associative cache
+ETEXI
+
+
+HXCOMM GDP MIPS definitions end
+
+
 HXCOMM This is the last statement. Insert new options before this line!
 STEXI
 @end table
