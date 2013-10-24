@@ -10,12 +10,15 @@ struct MipsCacheOpts {
 
     unsigned int d_line_size;
     unsigned int d_no_of_lines;
+    unsigned char d_type;
 
     unsigned int i_line_size;
     unsigned int i_no_of_lines;
+    unsigned char i_type;
 
     unsigned int l2_line_size;
-    unsigned int l2_no_of_lines; 
+    unsigned int l2_no_of_lines;
+    unsigned char l2_type;
 
     FILE *perf_dump;  
 };
