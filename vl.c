@@ -2975,16 +2975,38 @@ int main(int argc, char **argv, char **envp)
             }
             switch(popt->index) {
 
-            /* GDP MIPS cache size options */
+            /* GDP MIPS d-cache size options */
             case QEMU_OPTION_dcache:
-                printf("%s %s\n",popt->name,optarg);
                 pstrcpy(mips_cache_opts.d_opt,10,optarg);
                 if(proc_mips_cache_opt('d',optarg))
                 {
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("%u %u %c\n",mips_cache_opts.d_offset_width, mips_cache_opts.d_index_width, mips_cache_opts.d_type );
+                printf("dcache %s %u %u\n", mips_cache_opts.d_opt,
+                      mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines); 
+                break;
+
+            case QEMU_OPTION_icache:
+                pstrcpy(mips_cache_opts.i_opt,10,optarg);
+                if(proc_mips_cache_opt('i',optarg))
+                {
+                    /* Error in processing option argument */
+                    exit(1);
+                }
+                printf("icache %s %u %u\n", mips_cache_opts.i_opt,
+                      mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines);    
+                break;
+
+            case QEMU_OPTION_l2cache:
+                pstrcpy(mips_cache_opts.l2_opt,10,optarg);
+                if(proc_mips_cache_opt('u',optarg))
+                {
+                    /* Error in processing option argument */
+                    exit(1);
+                }
+                printf("icache %s %u %u\n", mips_cache_opts.l2_opt,
+                      mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines); 
                 break;
 
             case QEMU_OPTION_M:
