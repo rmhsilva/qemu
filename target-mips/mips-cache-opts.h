@@ -17,9 +17,9 @@
 #include "qemu-common.h"
 
 struct MipsCacheOpts {
-    char d_opt[10];
-    char i_opt[10];
-    char l2_opt[10];
+    char d_opt[12];
+    char i_opt[12];
+    char l2_opt[12];
 
     unsigned char use_d;
     unsigned char d_type;
@@ -46,10 +46,10 @@ struct MipsCacheOpts {
     FILE *dcache_log;
     FILE *l2cache_log;
 
-    uint64_t *dld_hit_cnt;
-    uint64_t *dld_miss_cnt;
-    uint64_t *dst_hit_cnt;
-    uint64_t *dst_miss_cnt;
+    uint64_t *d_ld_hit_cnt;
+    uint64_t *d_ld_miss_cnt;
+    uint64_t *d_st_hit_cnt;
+    uint64_t *d_st_miss_cnt;
     uint64_t *i_hit_cnt;
     uint64_t *i_miss_cnt;
     uint64_t *l2_hit_cnt;
@@ -62,6 +62,8 @@ extern struct MipsCacheOpts mips_cache_opts;
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg);
 
 void log_cache_data(void);
+
+unsigned int gdp_log2(unsigned int n);
 
 #endif
 

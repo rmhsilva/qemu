@@ -187,15 +187,15 @@ void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load)
 
     if (hit) {
         if (is_load)
-            mips_cache_opts.dld_hit_cnt[DECODE_INDEX(addr)]++;
+            mips_cache_opts.d_ld_hit_cnt[DECODE_INDEX(addr)]++;
         else
-            mips_cache_opts.dst_hit_cnt[DECODE_INDEX(addr)]++;
+            mips_cache_opts.d_st_hit_cnt[DECODE_INDEX(addr)]++;
     }
     else {
         if (is_load)
-            mips_cache_opts.dld_miss_cnt[DECODE_INDEX(addr)]++;
+            mips_cache_opts.d_ld_miss_cnt[DECODE_INDEX(addr)]++;
         else
-            mips_cache_opts.dst_miss_cnt[DECODE_INDEX(addr)]++;
+            mips_cache_opts.d_st_miss_cnt[DECODE_INDEX(addr)]++;
     }
 }
 #endif

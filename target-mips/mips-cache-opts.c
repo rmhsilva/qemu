@@ -1,30 +1,6 @@
 /* GDP  */
 /* File includes functions calculating offset and index widths */
-/* Allowed cache types and sizes;  */
-/* 2kB: */
-/* 1x512_dm 2x256_dm 4x128_dm 8x64_dm */
-/* 1x512_2w 2x256_2w 4x128_2w 8x64_2w */
-/* 1x512_4w 2x256_4w 4x128_4w 8x64_4w */
-
-/* 4kB: */
-/* 1x1024_dm 2x512_dm 4x256_dm 8x128_dm */
-/* 1x1024_2w 2x512_2w 4x256_2w 8x128_2w */
-/* 1x1024_4w 2x512_4w 4x256_4w 8x128_4w */
-
-/* 8kB: */
-/* 1x2048_dm 2x1024_dm 4x512_dm 8x256_dm */
-/* 1x2048_2w 2x1024_2w 4x512_2w 8x256_2w */
-/* 1x2048_4w 2x1024_4w 4x512_4w 8x256_4w */
-
-/* 16kB: */
-/* 1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm */
-/* 1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w */
-/* 1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w */
-
-/* 32kB: */
-/* 1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm */
-/* 1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w */
-/* 1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w */
+/* See allowed cache types and sizes at the end of this file */
 
 #include <string.h>
 #include <stdio.h>
@@ -35,7 +11,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* which_cache; */
+/* which_cache: */
 /*     d - d-cache */
 /*     i - i-cache */
 /*     u - unified L2 cache */
@@ -51,6 +27,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     unsigned int *offset_width;
     unsigned int *index_width;
     unsigned int *index_mask;
+    unsigned int tmp0, tmp1, tmp3;
+    char tmp2[10];
 
 
     /* D-cache */
@@ -85,87 +63,110 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     }
     else
     {
-        fprintf(stderr,"Unrecognised cache in proc_mips_cache_opt - which_cache\n");
+        fprintf(stderr,
+            "*** Error: Unrecognised cache in proc_mips_cache_opt - which_cache\n");
         return 1;
     }
 
-    /* Process option argument */
+    /* Process option arguments */
+    if(sscanf(arg,"%ux%u_%9s", &tmp0, &tmp1, tmp2) != 3)
+    {
+        fprintf(stderr,
+            "*** Error: Cannot process arguments of %c-cache\n",which_cache);
+        return 1;        
+    }
 
-    if(!strcmp(arg,"1x512_dm")){*offset_width=2;*index_width=9;*type = 'd';}
-    else if(!strcmp(arg,"1x512_2w")){*offset_width=2;*index_width=9;*type = '2';}
-    else if(!strcmp(arg,"1x512_4w")){*offset_width=2;*index_width=9;*type = '4';}
-    else if(!strcmp(arg,"2x256_dm")){*offset_width=3;*index_width=8;*type='d';}
-    else if(!strcmp(arg,"2x256_2w")){*offset_width=3;*index_width=8;*type='2';}
-    else if(!strcmp(arg,"2x256_4w")){*offset_width=3;*index_width=8;*type='4';}
-    else if(!strcmp(arg,"4x128_dm")){*offset_width=4;*index_width=7;*type='d';}
-    else if(!strcmp(arg,"4x128_2w")){*offset_width=4;*index_width=7;*type='2';}
-    else if(!strcmp(arg,"4x128_4w")){*offset_width=4;*index_width=7;*type='4';}
-    else if(!strcmp(arg,"8x64_dm")){*offset_width=5;*index_width=6;*type='d';}
-    else if(!strcmp(arg,"8x64_2w")){*offset_width=5;*index_width=6;*type='2';}
-    else if(!strcmp(arg,"8x64_4w")){*offset_width=5;*index_width=6;*type='4';}
-    else if(!strcmp(arg,"1x1024_dm")){*offset_width=2;*index_width=10;*type='d';}
-    else if(!strcmp(arg,"1x1024_2w")){*offset_width=2;*index_width=10;*type='2';}
-    else if(!strcmp(arg,"1x1024_4w")){*offset_width=2;*index_width=10;*type='4';}
-    else if(!strcmp(arg,"2x512_dm")){*offset_width=3;*index_width=9;*type='d';}
-    else if(!strcmp(arg,"2x512_2w")){*offset_width=3;*index_width=9;*type='2';}
-    else if(!strcmp(arg,"2x512_4w")){*offset_width=3;*index_width=9;*type='4';}
-    else if(!strcmp(arg,"4x256_dm")){*offset_width=4;*index_width=8;*type='d';}
-    else if(!strcmp(arg,"4x256_2w")){*offset_width=4;*index_width=8;*type='2';}
-    else if(!strcmp(arg,"4x256_4w")){*offset_width=4;*index_width=8;*type='4';}
-    else if(!strcmp(arg,"8x128_dm")){*offset_width=5;*index_width=7;*type='d';}
-    else if(!strcmp(arg,"8x128_2w")){*offset_width=5;*index_width=7;*type='2';}
-    else if(!strcmp(arg,"8x128_4w")){*offset_width=5;*index_width=7;*type='4';}
-    else if(!strcmp(arg,"1x2048_dm")){*offset_width=2;*index_width=11;*type='d';}
-    else if(!strcmp(arg,"1x2048_2w")){*offset_width=2;*index_width=11;*type='2';}
-    else if(!strcmp(arg,"1x2048_4w")){*offset_width=2;*index_width=11;*type='4';}
-    else if(!strcmp(arg,"2x1024_dm")){*offset_width=3;*index_width=10;*type='d';}
-    else if(!strcmp(arg,"2x1024_2w")){*offset_width=3;*index_width=10;*type='2';}
-    else if(!strcmp(arg,"2x1024_4w")){*offset_width=3;*index_width=10;*type='4';}
-    else if(!strcmp(arg,"4x512_dm")){*offset_width=4;*index_width=9;*type='d';}
-    else if(!strcmp(arg,"4x512_2w")){*offset_width=4;*index_width=9;*type='2';}
-    else if(!strcmp(arg,"4x512_4w")){*offset_width=4;*index_width=9;*type='4';}
-    else if(!strcmp(arg,"8x256_dm")){*offset_width=5;*index_width=8;*type='d';}
-    else if(!strcmp(arg,"8x256_2w")){*offset_width=5;*index_width=8;*type='2';}
-    else if(!strcmp(arg,"8x256_4w")){*offset_width=5;*index_width=8;*type='4';}
-    else if(!strcmp(arg,"1x4096_dm")){*offset_width=2;*index_width=12;*type='d';}
-    else if(!strcmp(arg,"1x4096_2w")){*offset_width=2;*index_width=12;*type='2';}
-    else if(!strcmp(arg,"1x4096_4w")){*offset_width=2;*index_width=12;*type='4';}
-    else if(!strcmp(arg,"2x2048_dm")){*offset_width=3;*index_width=11;*type='d';}
-    else if(!strcmp(arg,"2x2048_2w")){*offset_width=3;*index_width=11;*type='2';}
-    else if(!strcmp(arg,"2x2048_4w")){*offset_width=3;*index_width=11;*type='4';}
-    else if(!strcmp(arg,"4x1024_dm")){*offset_width=4;*index_width=10;*type='d';}
-    else if(!strcmp(arg,"4x1024_2w")){*offset_width=4;*index_width=10;*type='2';}
-    else if(!strcmp(arg,"4x1024_4w")){*offset_width=4;*index_width=10;*type='4';}
-    else if(!strcmp(arg,"8x512_dm")){*offset_width=5;*index_width=9;*type='d';}
-    else if(!strcmp(arg,"8x512_2w")){*offset_width=5;*index_width=9;*type='2';}
-    else if(!strcmp(arg,"8x512_4w")){*offset_width=5;*index_width=9;*type='4';}
-    else if(!strcmp(arg,"1x8192_dm")){*offset_width=2;*index_width=13;*type='d';}
-    else if(!strcmp(arg,"1x8192_2w")){*offset_width=2;*index_width=13;*type='2';}
-    else if(!strcmp(arg,"1x8192_4w")){*offset_width=2;*index_width=13;*type='4';}
-    else if(!strcmp(arg,"2x4096_dm")){*offset_width=3;*index_width=12;*type='d';}
-    else if(!strcmp(arg,"2x4096_2w")){*offset_width=3;*index_width=12;*type='2';}
-    else if(!strcmp(arg,"2x4096_4w")){*offset_width=3;*index_width=12;*type='4';}
-    else if(!strcmp(arg,"4x2048_dm")){*offset_width=4;*index_width=11;*type='d';}
-    else if(!strcmp(arg,"4x2048_2w")){*offset_width=4;*index_width=11;*type='2';}
-    else if(!strcmp(arg,"4x2048_4w")){*offset_width=4;*index_width=11;*type='4';}
-    else if(!strcmp(arg,"8x1024_dm")){*offset_width=5;*index_width=10;*type='d';}
-    else if(!strcmp(arg,"8x1024_2w")){*offset_width=5;*index_width=10;*type='2';}
-    else if(!strcmp(arg,"8x1024_4w")){*offset_width=5;*index_width=10;*type='4';}
+    /* Check cache type */
+    if(!strcmp(tmp2,"dm")){*type = 'd';}
+    else if(!strcmp(tmp2,"2w")){*type = '2';}
+    else if(!strcmp(tmp2,"4w")){*type = '4';}
     else
     {
-         fprintf(stderr,"*** Error: Invalid cache type or size: '%s'\n",arg);
-        return 1;
+        fprintf(stderr,
+            "*** Error: Unrecognised type of %c-cache\n",which_cache);
+        return 1;       
+    }
+    
+    /* Check no of words in each cache line and number of lines */
+    if(which_cache != 'u') /* d-cache and i-cache */
+    {
+        if(tmp0 != 1 && tmp0 != 2 && tmp0 != 4 && tmp0 != 8)
+        {
+            fprintf(stderr,
+                "*** Error: Wrong number of words in a line of %c-cache: %u\n",
+                which_cache, tmp0);
+            return 1;       
+        }
+        /* 64 to 8192 lines (increased by power of two) */
+        if(tmp1 != 1 << 6 && tmp1 != 1 << 7 && tmp1 != 1 << 8 && tmp1 != 1 << 9 &&
+             tmp1 != 1 << 10 && tmp1 != 1 << 11 && tmp1 != 1 << 12 && tmp1 != 1 << 13)
+        {
+            fprintf(stderr,
+                "*** Error: Wrong number of lines in %c-cache: %u\n",
+                which_cache, tmp1);
+            return 1;     
+        }        
+    }
+    else /* L2-cache */
+    {
+        if(tmp0 != 4 && tmp0 != 8 && tmp0 != 16 && tmp0 != 32)
+        {
+            fprintf(stderr,
+                "*** Error: Wrong number of words in a line of L2 cache: %u\n",
+                tmp0);
+            return 1;       
+        }
+        /* 2048 to 262144 lines (increased by power of two) */
+        if(tmp1 != 1 << 11 && tmp1 != 1 << 12 && tmp1 != 1 << 13 && tmp1 != 1 << 14 &&
+             tmp1 != 1 << 15 && tmp1 != 1 << 16 && tmp1 != 1 << 17 && tmp1 != 1 << 18)
+        {
+            fprintf(stderr,
+                "*** Error: Wrong number of lines in L2 cache: %u\n",
+                tmp1);
+            return 1;     
+        }     
     }
 
-    *no_of_lines = 1 << *index_width;
-    *index_mask = *index_width - 1;
+    /* Check cache size */
+    tmp3 = tmp0 * 32 * tmp1;
+    if(which_cache != 'u') /* d-cache and i-cache */
+    {
+        /* 2kB - 32kB */
+        if(tmp3 != 1 << 14 && tmp3 != 1 << 15 && tmp3 != 1 << 16 && 
+            tmp3 != 1 << 17 && tmp3 != 1 << 18)
+        {
+            fprintf(stderr,
+                "*** Error: Unsupported size of %c-cache: %u\n",
+                which_cache, tmp3);
+            return 1;       
+        }
+    }
+    else /* L2-cache */
+    {
+        /* 256kB - 4MB */
+        if(tmp3 != 1 << 21 && tmp3 != 1 << 22 && tmp3 != 1 << 23 && 
+            tmp3 != 1 << 24 && tmp3 != 1 << 25)
+        {
+            fprintf(stderr,
+                "*** Error: Unsupported size of L2 cache: %u\n",
+                tmp3);
+            return 1;       
+        }    
+    }
+    
+    /* Extra 2 bits to account for byte address */
+    *offset_width = gdp_log2(tmp0) + 2;
+    
+    *index_width = gdp_log2(tmp1);
+    *no_of_lines = tmp1;
+    *index_mask = tmp1 - 1;
 
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
-        mips_cache_opts.dld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.dld_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.dst_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.dst_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.d_ld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.d_ld_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.d_st_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.d_st_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
     }
     else if (which_cache == 'i') {
         mips_cache_opts.i_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
@@ -205,8 +206,8 @@ void log_cache_data(void)
 
         for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
             fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
-                mips_cache_opts.dst_hit_cnt[i], mips_cache_opts.dst_miss_cnt[i],
-                mips_cache_opts.dld_hit_cnt[i], mips_cache_opts.dld_miss_cnt[i]);
+                mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
+                mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
         }
 
         fclose(fd);
@@ -214,3 +215,76 @@ void log_cache_data(void)
 
     // TODO: L2
 }
+
+/* Returns 0 if n is 0 */
+unsigned int gdp_log2(unsigned int n)
+{
+    unsigned int tmp = 0;
+    if(n == 0)
+    {
+        fprintf(stderr, "***Warning in gdp_log2(), log2 of 0 does not exist!\n");
+        return 0;
+    }
+    n = n >> 1;
+    while(n)
+    {
+        tmp = tmp + 1;
+        n = n >> 1;
+    }
+    return tmp;  
+}
+
+/* ------------------------------------------------------------------------- */
+/* Allowed cache types and sizes for dcache and icache:  */
+/* 2kB: */
+/* 1x512_dm 2x256_dm 4x128_dm 8x64_dm */
+/* 1x512_2w 2x256_2w 4x128_2w 8x64_2w */
+/* 1x512_4w 2x256_4w 4x128_4w 8x64_4w */
+
+/* 4kB: */
+/* 1x1024_dm 2x512_dm 4x256_dm 8x128_dm */
+/* 1x1024_2w 2x512_2w 4x256_2w 8x128_2w */
+/* 1x1024_4w 2x512_4w 4x256_4w 8x128_4w */
+
+/* 8kB: */
+/* 1x2048_dm 2x1024_dm 4x512_dm 8x256_dm */
+/* 1x2048_2w 2x1024_2w 4x512_2w 8x256_2w */
+/* 1x2048_4w 2x1024_4w 4x512_4w 8x256_4w */
+
+/* 16kB: */
+/* 1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm */
+/* 1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w */
+/* 1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w */
+
+/* 32kB: */
+/* 1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm */
+/* 1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w */
+/* 1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w */
+
+/* Allowed cache types and sizes for l2cache:  */
+
+/* 256kB: */
+/* 4x16384_dm 8x8192_dm 16x4096_dm 32x2048_dm */
+/* 4x16384_2w 8x8192_2w 16x4096_2w 32x2048_2w */
+/* 4x16384_4w 8x8192_4w 16x4096_4w 32x2048_4w */
+
+/* 512kB: */
+/* 4x32768_dm 8x16384_dm 16x8192_dm 32x4096_dm */
+/* 4x32768_2w 8x16384_2w 16x8192_2w 32x4096_2w */
+/* 4x32768_4w 8x16384_4w 16x8192_4w 32x4096_4w */
+
+/* 1MB: */
+/* 4x65536_dm 8x32768_dm 16x16384_dm 32x8192_dm */
+/* 4x65536_2w 8x32768_2w 16x16384_2w 32x8192_2w */
+/* 4x65536_4w 8x32768_4w 16x16384_4w 32x8192_4w */
+
+/* 2MB: */
+/* 4x131072_dm 8x65536_dm 16x32768_dm 32x16384_dm */
+/* 4x131072_2w 8x65536_2w 16x32768_2w 32x16384_2w */
+/* 4x131072_4w 8x65536_4w 16x32768_4w 32x16384_4w */
+
+/* 4MB: */
+/* 4x262144_dm 8x131072_dm 16x65536_dm 32x32768_dm */
+/* 4x262144_2w 8x131072_2w 16x65536_2w 32x32768_2w */
+/* 4x262144_4w 8x131072_4w 16x65536_4w 32x32768_4w */
+
