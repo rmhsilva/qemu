@@ -29,6 +29,11 @@
 #include <string.h>
 #include <stdio.h>
 #include "mips-cache-opts.h"
+#include "cpu.h"
+
+/* Macros for displaying uint64t */
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 /* which_cache; */
 /*     d - d-cache */
@@ -121,41 +126,91 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     else if(!strcmp(arg,"4x512_4w")){*offset_width=4;*index_width=9;*type='4';}
     else if(!strcmp(arg,"8x256_dm")){*offset_width=5;*index_width=8;*type='d';}
     else if(!strcmp(arg,"8x256_2w")){*offset_width=5;*index_width=8;*type='2';}
-    else if(!strcmp(arg,"8x256_4w")){*offset_width=5;*index_width=8;*type='4';}     
-    else if(!strcmp(arg,"1x4096_dm")){*offset_width=2;*index_width=12;*type='d';} 
-    else if(!strcmp(arg,"1x4096_2w")){*offset_width=2;*index_width=12;*type='2';} 
-    else if(!strcmp(arg,"1x4096_4w")){*offset_width=2;*index_width=12;*type='4';} 
-    else if(!strcmp(arg,"2x2048_dm")){*offset_width=3;*index_width=11;*type='d';} 
-    else if(!strcmp(arg,"2x2048_2w")){*offset_width=3;*index_width=11;*type='2';} 
-    else if(!strcmp(arg,"2x2048_4w")){*offset_width=3;*index_width=11;*type='4';} 
-    else if(!strcmp(arg,"4x1024_dm")){*offset_width=4;*index_width=10;*type='d';} 
-    else if(!strcmp(arg,"4x1024_2w")){*offset_width=4;*index_width=10;*type='2';} 
-    else if(!strcmp(arg,"4x1024_4w")){*offset_width=4;*index_width=10;*type='4';} 
-    else if(!strcmp(arg,"8x512_dm")){*offset_width=5;*index_width=9;*type='d';} 
-    else if(!strcmp(arg,"8x512_2w")){*offset_width=5;*index_width=9;*type='2';} 
-    else if(!strcmp(arg,"8x512_4w")){*offset_width=5;*index_width=9;*type='4';} 
-    else if(!strcmp(arg,"1x8192_dm")){*offset_width=2;*index_width=13;*type='d';} 
-    else if(!strcmp(arg,"1x8192_2w")){*offset_width=2;*index_width=13;*type='2';} 
-    else if(!strcmp(arg,"1x8192_4w")){*offset_width=2;*index_width=13;*type='4';} 
-    else if(!strcmp(arg,"2x4096_dm")){*offset_width=3;*index_width=12;*type='d';} 
-    else if(!strcmp(arg,"2x4096_2w")){*offset_width=3;*index_width=12;*type='2';} 
-    else if(!strcmp(arg,"2x4096_4w")){*offset_width=3;*index_width=12;*type='4';} 
-    else if(!strcmp(arg,"4x2048_dm")){*offset_width=4;*index_width=11;*type='d';} 
-    else if(!strcmp(arg,"4x2048_2w")){*offset_width=4;*index_width=11;*type='2';} 
-    else if(!strcmp(arg,"4x2048_4w")){*offset_width=4;*index_width=11;*type='4';} 
-    else if(!strcmp(arg,"8x1024_dm")){*offset_width=5;*index_width=10;*type='d';} 
-    else if(!strcmp(arg,"8x1024_2w")){*offset_width=5;*index_width=10;*type='2';} 
-    else if(!strcmp(arg,"8x1024_4w")){*offset_width=5;*index_width=10;*type='4';} 
+    else if(!strcmp(arg,"8x256_4w")){*offset_width=5;*index_width=8;*type='4';}
+    else if(!strcmp(arg,"1x4096_dm")){*offset_width=2;*index_width=12;*type='d';}
+    else if(!strcmp(arg,"1x4096_2w")){*offset_width=2;*index_width=12;*type='2';}
+    else if(!strcmp(arg,"1x4096_4w")){*offset_width=2;*index_width=12;*type='4';}
+    else if(!strcmp(arg,"2x2048_dm")){*offset_width=3;*index_width=11;*type='d';}
+    else if(!strcmp(arg,"2x2048_2w")){*offset_width=3;*index_width=11;*type='2';}
+    else if(!strcmp(arg,"2x2048_4w")){*offset_width=3;*index_width=11;*type='4';}
+    else if(!strcmp(arg,"4x1024_dm")){*offset_width=4;*index_width=10;*type='d';}
+    else if(!strcmp(arg,"4x1024_2w")){*offset_width=4;*index_width=10;*type='2';}
+    else if(!strcmp(arg,"4x1024_4w")){*offset_width=4;*index_width=10;*type='4';}
+    else if(!strcmp(arg,"8x512_dm")){*offset_width=5;*index_width=9;*type='d';}
+    else if(!strcmp(arg,"8x512_2w")){*offset_width=5;*index_width=9;*type='2';}
+    else if(!strcmp(arg,"8x512_4w")){*offset_width=5;*index_width=9;*type='4';}
+    else if(!strcmp(arg,"1x8192_dm")){*offset_width=2;*index_width=13;*type='d';}
+    else if(!strcmp(arg,"1x8192_2w")){*offset_width=2;*index_width=13;*type='2';}
+    else if(!strcmp(arg,"1x8192_4w")){*offset_width=2;*index_width=13;*type='4';}
+    else if(!strcmp(arg,"2x4096_dm")){*offset_width=3;*index_width=12;*type='d';}
+    else if(!strcmp(arg,"2x4096_2w")){*offset_width=3;*index_width=12;*type='2';}
+    else if(!strcmp(arg,"2x4096_4w")){*offset_width=3;*index_width=12;*type='4';}
+    else if(!strcmp(arg,"4x2048_dm")){*offset_width=4;*index_width=11;*type='d';}
+    else if(!strcmp(arg,"4x2048_2w")){*offset_width=4;*index_width=11;*type='2';}
+    else if(!strcmp(arg,"4x2048_4w")){*offset_width=4;*index_width=11;*type='4';}
+    else if(!strcmp(arg,"8x1024_dm")){*offset_width=5;*index_width=10;*type='d';}
+    else if(!strcmp(arg,"8x1024_2w")){*offset_width=5;*index_width=10;*type='2';}
+    else if(!strcmp(arg,"8x1024_4w")){*offset_width=5;*index_width=10;*type='4';}
     else
     {
          fprintf(stderr,"*** Error: Invalid cache type or size: '%s'\n",arg);
-        return 1;       
+        return 1;
     }
 
     *no_of_lines = 1 << *index_width;
     *index_mask = *index_width - 1;
-    
+
+    // Allocate memory for hit/miss counters
+    if (which_cache == 'd') {
+        mips_cache_opts.dld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.dld_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.dst_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.dst_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+    }
+    else if (which_cache == 'i') {
+        mips_cache_opts.i_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.i_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+    }
+    else if (which_cache == 'u') {
+        mips_cache_opts.l2_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.l2_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+    }
+
     return 0; 
 }
 
 
+void log_cache_data(void)
+{
+    int i;
+    printf("logging \n");
+
+    if (mips_cache_opts.use_i) {
+        char fname[50] = "log-";
+        pstrcat(fname, 50, mips_cache_opts.i_opt);
+        FILE *fd = fopen(fname, "w");
+        
+        for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
+            fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
+                mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
+        }
+
+        fclose(fd);
+    }
+
+    if (mips_cache_opts.use_d) {
+        char fname[50] = "log-";
+        pstrcat(fname, 50, mips_cache_opts.d_opt);
+        FILE *fd = fopen(fname, "w");
+
+        for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
+            fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
+                mips_cache_opts.dst_hit_cnt[i], mips_cache_opts.dst_miss_cnt[i],
+                mips_cache_opts.dld_hit_cnt[i], mips_cache_opts.dld_miss_cnt[i]);
+        }
+
+        fclose(fd);
+    }
+
+    // TODO: L2
+}

@@ -4391,5 +4391,8 @@ int main(int argc, char **argv, char **envp)
     tpm_cleanup();
 #endif
 
+    /**GDP**/
+    log_cache_data();
+
     return 0;
 }

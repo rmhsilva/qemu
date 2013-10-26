@@ -646,21 +646,32 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 
 /**GDP**/
+#define LOGFILE_NAME_LEN 45
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
-    const char *logfile = "./log.bin";
+    // TEMP:
+    mips_cache_opts.use_d = 1;
+    mips_cache_opts.use_i = 1;
+    mips_cache_opts.i_no_of_lines = 8;
+    mips_cache_opts.d_no_of_lines = 8;
     
-    // allocate the memory...
-    env->cache = g_malloc0(sizeof(CPUMIPSCacheContext));
+    // allocate the cache context memory...
+    env->cache = (CPUMIPSCacheContext *)g_malloc0(sizeof(CPUMIPSCacheContext));
+    env->cache->opts = &mips_cache_opts;
 
-    // Open a file for logging
-    FILE *fd = fopen(logfile, "wb");
+    if (mips_cache_opts.use_i) {
+        env->cache->icache =
+            (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.i_no_of_lines);
+    }
 
-    if (fd) {
-        printf("Opened logfile: %s\n", logfile);
-        env->cache->logfile = fd;
+    if (mips_cache_opts.use_d) {
+        env->cache->dcache =
+            (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.d_no_of_lines);
     }
-    else {
-        fprintf(stderr, ":( Error opening logfile: %s\n", logfile);
-    }
+
+    // TODO: L2 cache
+    // if (mips_cache_opts.)
+    //     pstrcat(logfile, LOGFILE_NAME_LEN, mips_cache_opts.l2_opt);
+
 }
+/**GDP**/

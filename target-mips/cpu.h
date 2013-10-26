@@ -15,6 +15,9 @@
 #include "exec/cpu-defs.h"
 #include "fpu/softfloat.h"
 
+/**GDP**/
+#include "mips-cache-opts.h"
+
 struct CPUMIPSState;
 
 typedef struct r4k_tlb_t r4k_tlb_t;
@@ -53,17 +56,18 @@ struct CPUMIPSTLBContext {
 /**GDP**/
 typedef struct cache_item_t cache_item_t;
 struct cache_item_t {
-    uint_fast32_t tag  : MIPS_CACHE_TAG_WIDTH;
+    uint_fast32_t hit_cnt  : 32;
+    uint_fast32_t miss_cnt : 32;
+    uint_fast32_t tag  : 30;
     uint_fast8_t valid : 1;
     uint_fast8_t lock  : 1;
 };
 
 typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
 struct CPUMIPSCacheContext {
-    // uint32_t taglo;
-    cache_item_t icache[1<<MIPS_CACHE_INDEX_WIDTH];
-    cache_item_t dcache[1<<MIPS_CACHE_INDEX_WIDTH];
-    FILE *logfile;
+    cache_item_t *icache;
+    cache_item_t *dcache;
+    struct MipsCacheOpts *opts;
 };
 /**GDP**/
 

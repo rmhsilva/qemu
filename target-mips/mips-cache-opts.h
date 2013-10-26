@@ -14,12 +14,14 @@
 #ifndef MIPS_CACHE_OPTS
 #define MIPS_CACHE_OPTS
 
+#include "qemu-common.h"
+
 struct MipsCacheOpts {
     char d_opt[10];
     char i_opt[10];
     char l2_opt[10];
 
-    unsigned char use_d;    
+    unsigned char use_d;
     unsigned char d_type;
     unsigned int d_no_of_lines;
     unsigned int d_offset_width;
@@ -31,21 +33,35 @@ struct MipsCacheOpts {
     unsigned int i_no_of_lines;
     unsigned int i_offset_width;
     unsigned int i_index_width;
-    unsigned int i_index_mask;    
+    unsigned int i_index_mask;
 
-    unsigned char use_l2;    
+    unsigned char use_l2;
     unsigned int l2_no_of_lines;
     unsigned char l2_type;
     unsigned int l2_offset_width;
     unsigned int l2_index_width;
-    unsigned int l2_index_mask; 
+    unsigned int l2_index_mask;
 
-    FILE *perf_dump;  
+    FILE *icache_log;
+    FILE *dcache_log;
+    FILE *l2cache_log;
+
+    uint64_t *dld_hit_cnt;
+    uint64_t *dld_miss_cnt;
+    uint64_t *dst_hit_cnt;
+    uint64_t *dst_miss_cnt;
+    uint64_t *i_hit_cnt;
+    uint64_t *i_miss_cnt;
+    uint64_t *l2_hit_cnt;
+    uint64_t *l2_miss_cnt;
 };
+
 
 extern struct MipsCacheOpts mips_cache_opts;
 
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg);
+
+void log_cache_data(void);
 
 #endif
 

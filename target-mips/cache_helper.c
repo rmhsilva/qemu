@@ -25,28 +25,60 @@
 #include <inttypes.h>
 
 // Macro to fill the info bitfields for logging (opcode, is_hit, is_load)
-#define FILL_INFO(o,h,l) (o | (h<<6) | (l<<7))
+// #define FILL_INFO(o,h,l) (o | (h<<6) | (l<<7))
 
-typedef struct logdata_t logdata_t;
-struct logdata_t {
-    uint32_t address;
-    uint8_t info;
-};
+// typedef struct logdata_t logdata_t;
+// struct logdata_t {
+//     uint32_t address;
+//     uint8_t info;
+// };
 
-/*****************************************************************************/
-/* Misc Helpers */
+// /*****************************************************************************/
+// /* Misc Helpers */
 
-static void log_data(CPUMIPSState *env,
-    uint32_t addr, uint8_t is_hit, uint8_t opcode, uint32_t is_load)
-{
-    logdata_t log_data = {
-        .address = addr,
-        .info    = FILL_INFO(opcode, is_hit, is_load)
-    };
+// #undef DO_BIGLOG
+// #ifdef DO_BIGLOG
+// static void log_data(CPUMIPSState *env,
+//     uint32_t addr, uint8_t is_hit, uint8_t opcode, uint32_t is_load)
+// {
+//     static int write_cnt = 0;
 
-    fwrite(&log_data, (size_t)5, 1, env->cache->logfile);
-    // printf("[%x]: %d, Opcode: %x, Load: %d\n", addr, is_hit, opcode, is_load);
-}
+//     logdata_t log_data = {
+//         .address = addr,
+//         .info    = FILL_INFO(opcode, is_hit, is_load)
+//     };
+
+//     fwrite(&log_data, (size_t)5, 1, env->cache->opts->perf_dump);
+//     // printf("[%x]: %d, Opcode: %x, Load: %d\n", addr, is_hit, opcode, is_load);
+
+//     // Flush the write buffer periodically
+//     if (write_cnt++ > 100) {
+//         fflush(env->cache->opts->perf_dump);
+//         write_cnt = 0;
+//     }
+// }
+// #endif
+
+
+// static void log_cache(CPUMIPSState *env, cache_item_t *cache, uint32_t flag)
+// {
+//     static int i, write_cnt = 0;
+
+//     // Need to log: num hits & misses
+//     for (i = 0; i < (1<<MIPS_CACHE_INDEX_WIDTH); ++i) {
+//         // printf("Line %d: %d hits, %d misses\n", i, cache[i].hit_cnt, cache[i].miss_cnt);
+//         fwrite(&cache[i], (size_t)4, 2, env->cache->opts->perf_dump);
+//     }
+
+//     fwrite(&flag, sizeof(uint32_t), 1, env->cache->opts->perf_dump);
+//     fwrite(&flag, sizeof(uint32_t), 1, env->cache->opts->perf_dump);
+    
+//     // Flush the write buffer periodically
+//     if (write_cnt++ > 10) {
+//         fflush(env->cache->opts->perf_dump);
+//         write_cnt = 0;
+//     }
+// }
 
 
 /*****************************************************************************/
@@ -55,24 +87,6 @@ static void log_data(CPUMIPSState *env,
 #define DECODE_INDEX(addr) (((addr) & (MIPS_CACHE_INDEX_MASK)) >> MIPS_CACHE_INDEX_SHIFT)
 #define DECODE_TAG(addr) ((addr) >> MIPS_CACHE_TAG_SHIFT)
 #define DECODE_OFFSET(addr) ((addr & (MIPS_CACHE_OFFSET_MASK)) >> MIPS_CACHE_OFFSET_SHIFT)
-
-// #ifndef CONFIG_USER_ONLY
-// // D-cache test:
-// void helper_dcache(CPUMIPSState *env, target_ulong addr)
-// {
-//     hwaddr phys_address;
-//     phys_address = get_phys_addr_cache(env, addr);
-    
-//     fprintf(stderr,"VA: [%x] PA: %" PRIx64 "\n", addr,phys_address);
-
-// #if TARGET_LONG_BITS == 32
-//     //printf("LD PA: %" PRId64 "\n", phys_address);
-// #else
-//    // printf("LD PA: %" PRId64 "\n", phys_address);
-// #endif
-
-// }
-// #endif
 
 
 // I-cache utility functions:
@@ -150,11 +164,15 @@ static inline void fetch_lock(CPUMIPSState *env, unsigned int address)
 // QEMU Helpers
 
 void helper_icache(CPUMIPSState *env, target_ulong pc, unsigned int opcode)
-{    
+{
     uint8_t hit = access_cache(env->cache->icache, (uint32_t)pc);
 
-    // uint32_t addr, uint8_t is_hit, uint8_t opcode, uint32_t is_load
-    log_data(env, (uint32_t)pc, hit, ((opcode >> 26) & 0x3F), 0);
+    if (hit) {
+        mips_cache_opts.i_hit_cnt[DECODE_INDEX(pc)]++;
+    }
+    else {
+        mips_cache_opts.i_miss_cnt[DECODE_INDEX(pc)]++;
+    }
 }
 
 #ifndef CONFIG_USER_ONLY
@@ -167,7 +185,18 @@ void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load)
     
     // TODO: dirty bit etc
 
-    log_data(env, phys_address, hit, 0xFF, is_load);
+    if (hit) {
+        if (is_load)
+            mips_cache_opts.dld_hit_cnt[DECODE_INDEX(addr)]++;
+        else
+            mips_cache_opts.dst_hit_cnt[DECODE_INDEX(addr)]++;
+    }
+    else {
+        if (is_load)
+            mips_cache_opts.dld_miss_cnt[DECODE_INDEX(addr)]++;
+        else
+            mips_cache_opts.dst_miss_cnt[DECODE_INDEX(addr)]++;
+    }
 }
 #endif
 
