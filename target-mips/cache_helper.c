@@ -28,7 +28,7 @@
 /*****************************************************************************/
 /* GDP */
 
-#define DECODE_INDEX(addr,mask,offset) (((addr) & (mask)) >> (offset))
+#define DECODE_INDEX(addr,mask,offset) (((addr) >> (offset)) & (mask))
 #define DECODE_TAG(addr,idx_width) ((addr) >> (idx_width))
 
 // I-cache utility functions:
@@ -133,7 +133,7 @@ void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t tag = DECODE_TAG(phys_address, 
         mips_cache_opts.d_index_width + mips_cache_opts.d_offset_width);
 
-    uint8_t hit = access_cache(env->cache->icache, idx, tag);
+    uint8_t hit = access_cache(env->cache->dcache, idx, tag);
     
     // TODO: dirty bit etc
 

@@ -159,7 +159,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     
     *index_width = gdp_log2(tmp1);
     *no_of_lines = tmp1;
-    *index_mask = (1 << tmp1) - 1;
+    *index_mask = tmp1 - 1;
 
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
@@ -187,9 +187,10 @@ void log_cache_data(void)
     printf("Logging \n");
 
     if (mips_cache_opts.use_i) {
-        char fname[50] = "log-";
-        pstrcat(fname, 50, mips_cache_opts.i_opt);
+        char fname[60] = "log-icache-";
+        pstrcat(fname, 60, mips_cache_opts.i_opt);
         FILE *fd = fopen(fname, "w");
+        printf("Logging icache data\n");
         
         for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
             fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
@@ -197,12 +198,15 @@ void log_cache_data(void)
         }
 
         fclose(fd);
+        free(mips_cache_opts.i_hit_cnt);
+        free(mips_cache_opts.i_miss_cnt);
     }
 
     if (mips_cache_opts.use_d) {
-        char fname[50] = "log-";
-        pstrcat(fname, 50, mips_cache_opts.d_opt);
+        char fname[60] = "log-dcache-";
+        pstrcat(fname, 60, mips_cache_opts.d_opt);
         FILE *fd = fopen(fname, "w");
+        printf("Logging dcache data\n");
 
         for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
             fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
@@ -211,6 +215,10 @@ void log_cache_data(void)
         }
 
         fclose(fd);
+        free(mips_cache_opts.d_ld_hit_cnt);
+        free(mips_cache_opts.d_st_hit_cnt);
+        free(mips_cache_opts.d_ld_miss_cnt);
+        free(mips_cache_opts.d_st_miss_cnt);
     }
 
     // TODO: L2
