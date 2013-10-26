@@ -1608,7 +1608,8 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
 /*GDP*/
 #ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
-   gen_helper_dcache(cpu_env, t0, 1);
+    if (mips_cache_opts.use_d)
+        gen_helper_dcache(cpu_env, t0, 1);
 #else
    // gen_helper_dcache(cpu_env, t0);
 #endif
@@ -1785,7 +1786,8 @@ static void gen_st (DisasContext *ctx, uint32_t opc, int rt,
 /**GDP**/
 #ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
-    gen_helper_dcache(cpu_env, t0, 0);
+    if (mips_cache_opts.use_d)
+        gen_helper_dcache(cpu_env, t0, 0);
 #else
     // gen_helper_dcache(cpu_env, t0);
 #endif
@@ -14458,11 +14460,13 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
     }
 
     /**GDP**/// : Cache helper
-    TCGv_i32 helper_pc = tcg_const_i32(ctx->pc);
-    TCGv_i32 helper_opcode = tcg_const_i32(ctx->opcode);
-    gen_helper_icache(cpu_env, helper_pc, helper_opcode);
-    tcg_temp_free_i32(helper_opcode);
-    tcg_temp_free_i32(helper_pc);
+    if (mips_cache_opts.use_i) {
+        TCGv_i32 helper_pc = tcg_const_i32(ctx->pc);
+        TCGv_i32 helper_opcode = tcg_const_i32(ctx->opcode);
+        gen_helper_icache(cpu_env, helper_pc, helper_opcode);
+        tcg_temp_free_i32(helper_opcode);
+        tcg_temp_free_i32(helper_pc);
+    }
 
     /* Handle blikely not taken case */
     if ((ctx->hflags & MIPS_HFLAG_BMASK_BASE) == MIPS_HFLAG_BL) {

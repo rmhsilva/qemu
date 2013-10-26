@@ -159,7 +159,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     
     *index_width = gdp_log2(tmp1);
     *no_of_lines = tmp1;
-    *index_mask = tmp1 - 1;
+    *index_mask = (1 << tmp1) - 1;
 
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
@@ -184,7 +184,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 void log_cache_data(void)
 {
     int i;
-    printf("logging \n");
+    printf("Logging \n");
 
     if (mips_cache_opts.use_i) {
         char fname[50] = "log-";
