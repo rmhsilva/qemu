@@ -28,8 +28,8 @@
 /*****************************************************************************/
 /* GDP */
 
-#define DECODE_INDEX(addr,mask,offset) ((addr & mask) >> offset)
-#define DECODE_TAG(addr,idx_width) (addr >> idx_width)
+#define DECODE_INDEX(addr,mask,offset) (((addr) & (mask)) >> (offset))
+#define DECODE_TAG(addr,idx_width) ((addr) >> (idx_width))
 
 // I-cache utility functions:
 
