@@ -35,6 +35,10 @@
 #include "qemu/envlist.h"
 #include "elf.h"
 
+/* GDP */
+#include "../target-mips/mips-cache-opts.h"
+#include "mips/syscall_nr.h"
+
 char *exec_path;
 
 int singlestep;
@@ -2258,7 +2262,6 @@ static int do_break(CPUMIPSState *env, target_siginfo_t *info,
     default:
         break;
     }
-
     return ret;
 }
 
@@ -2311,6 +2314,13 @@ void cpu_loop(CPUMIPSState *env)
                 default:
                     break;
                 }
+                /* do_syscall exits the loop for these syscall_nrs */
+                if(env->active_tc.gpr[2] == TARGET_NR_exit ||
+                     env->active_tc.gpr[2] == TARGET_NR_exit_group)
+                {
+                    log_cache_data();
+                }
+                      
                 ret = do_syscall(env, env->active_tc.gpr[2],
                                  env->active_tc.gpr[4],
                                  env->active_tc.gpr[5],
@@ -3285,6 +3295,48 @@ void init_task_state(TaskState *ts)
     ts->sigqueue_table[i].next = NULL;
 }
 
+/* GDP option handlers */
+static void handle_arg_dcache(const char *arg)
+{
+    pstrcpy(mips_cache_opts.d_opt,10,arg);
+    if(proc_mips_cache_opt('d',arg))
+    {
+        /* Error in processing option argument */
+        exit(1);
+    }
+    printf("dcache %s %u %u %u %c\n", mips_cache_opts.d_opt,
+          mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
+          mips_cache_opts.d_index_width,mips_cache_opts.d_type);     
+}
+static void handle_arg_icache(const char *arg)
+{
+    pstrcpy(mips_cache_opts.i_opt,10,arg);
+    if(proc_mips_cache_opt('i',arg))
+    {
+        /* Error in processing option argument */
+        exit(1);
+    }
+    printf("icache %s %u %u %u %c\n", mips_cache_opts.i_opt,
+          mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
+            mips_cache_opts.i_index_width,mips_cache_opts.i_type);   
+}
+static void handle_arg_l2cache(const char *arg)
+{
+    pstrcpy(mips_cache_opts.l2_opt,12,arg);
+    if(proc_mips_cache_opt('u',arg))
+    {
+        /* Error in processing option argument */
+        exit(1);
+    }
+    printf("icache %s %u %u %u %c\n", mips_cache_opts.l2_opt,
+          mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
+          mips_cache_opts.l2_index_width,mips_cache_opts.l2_type);     
+}
+
+
+/* GDP option handlers end */
+
+
 static void handle_arg_help(const char *arg)
 {
     usage();
@@ -3496,6 +3548,14 @@ static const struct qemu_argument arg_table[] = {
      "",           "log system calls"},
     {"version",    "QEMU_VERSION",     false, handle_arg_version,
      "",           "display version information and exit"},
+/* GDP cache options */
+    {"dcache",    "QEMU_CACHE_D",     true, handle_arg_dcache,
+     "nxm_tp",           "choose d-cache size and type"},
+    {"icache",    "QEMU_CACHE_I",     true, handle_arg_icache,
+     "nxm_tp",           "choose i-cache size and type"},
+    {"l2cache",    "QEMU_CACHE_L2",     true, handle_arg_l2cache,
+     "nxm_tp",           "choose L2 cache size and type"},
+
     {NULL, NULL, false, NULL, NULL, NULL}
 };
 
