@@ -184,13 +184,11 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 void log_cache_data(void)
 {
     int i;
-    printf("Logging \n");
-
     if (mips_cache_opts.use_i) {
         char fname[60] = "log-icache-";
         pstrcat(fname, 60, mips_cache_opts.i_opt);
         FILE *fd = fopen(fname, "w");
-        printf("Logging icache data\n");
+        printf("Logging icache data (%s)\n", fname);
         
         for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
             fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
@@ -206,7 +204,7 @@ void log_cache_data(void)
         char fname[60] = "log-dcache-";
         pstrcat(fname, 60, mips_cache_opts.d_opt);
         FILE *fd = fopen(fname, "w");
-        printf("Logging dcache data\n");
+        printf("Logging dcache data (%s)\n", fname);
 
         for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
             fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,

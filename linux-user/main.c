@@ -2262,6 +2262,7 @@ static int do_break(CPUMIPSState *env, target_siginfo_t *info,
     default:
         break;
     }
+
     return ret;
 }
 
@@ -2314,13 +2315,13 @@ void cpu_loop(CPUMIPSState *env)
                 default:
                     break;
                 }
-                /* do_syscall exits the loop for these syscall_nrs */
+                /* GDP: do_syscall exits the loop for these syscall_nrs */
                 if(env->active_tc.gpr[2] == TARGET_NR_exit ||
                      env->active_tc.gpr[2] == TARGET_NR_exit_group)
                 {
                     log_cache_data();
                 }
-                      
+
                 ret = do_syscall(env, env->active_tc.gpr[2],
                                  env->active_tc.gpr[4],
                                  env->active_tc.gpr[5],
@@ -3306,7 +3307,7 @@ static void handle_arg_dcache(const char *arg)
     }
     printf("dcache %s %u %u %u %c\n", mips_cache_opts.d_opt,
           mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
-          mips_cache_opts.d_index_width,mips_cache_opts.d_type);     
+          mips_cache_opts.d_index_width,mips_cache_opts.d_type);
 }
 static void handle_arg_icache(const char *arg)
 {
@@ -3318,7 +3319,7 @@ static void handle_arg_icache(const char *arg)
     }
     printf("icache %s %u %u %u %c\n", mips_cache_opts.i_opt,
           mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
-            mips_cache_opts.i_index_width,mips_cache_opts.i_type);   
+            mips_cache_opts.i_index_width,mips_cache_opts.i_type);
 }
 static void handle_arg_l2cache(const char *arg)
 {
@@ -3330,7 +3331,7 @@ static void handle_arg_l2cache(const char *arg)
     }
     printf("icache %s %u %u %u %c\n", mips_cache_opts.l2_opt,
           mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
-          mips_cache_opts.l2_index_width,mips_cache_opts.l2_type);     
+          mips_cache_opts.l2_index_width,mips_cache_opts.l2_type);
 }
 
 
