@@ -30,6 +30,10 @@
 #include <zlib.h>
 #include "qemu/bitmap.h"
 
+#ifdef TARGET_MIPS
+#define MIPS_CACHE_LOG
+#endif
+
 /* Needed early for CONFIG_BSD etc. */
 #include "config-host.h"
 
@@ -171,8 +175,10 @@ int main(int argc, char **argv)
 #include "ui/qemu-spice.h"
 #include "qapi/string-input-visitor.h"
 
+#ifdef MIPS_CACHE_LOG
 /* GDP MIPS cache configuration */
 #include "target-mips/mips-cache-opts.h"
+#endif
 
 //#define DEBUG_NET
 //#define DEBUG_SLIRP
@@ -2974,8 +2980,8 @@ int main(int argc, char **argv, char **envp)
                 exit(1);
             }
             switch(popt->index) {
-
-            /* GDP MIPS d-cache size options */
+#ifdef MIPS_CACHE_LOG
+/* GDP MIPS cache size and type options */
             case QEMU_OPTION_dcache:
                 pstrcpy(mips_cache_opts.d_opt,10,optarg);
                 if(proc_mips_cache_opt('d',optarg))
@@ -3012,6 +3018,7 @@ int main(int argc, char **argv, char **envp)
                       mips_cache_opts.l2_index_width,mips_cache_opts.l2_type); 
                 break;
 
+#endif
             case QEMU_OPTION_M:
                 machine = machine_parse(optarg);
                 break;
@@ -4415,9 +4422,10 @@ int main(int argc, char **argv, char **envp)
 #ifdef CONFIG_TPM
     tpm_cleanup();
 #endif
-
-    /**GDP**/
+#ifdef MIPS_CACHE_LOG
+/**GDP**/
     log_cache_data();
+#endif
 
     return 0;
 }

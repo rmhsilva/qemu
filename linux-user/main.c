@@ -35,9 +35,11 @@
 #include "qemu/envlist.h"
 #include "elf.h"
 
+#ifdef TARGET_MIPS
 /* GDP */
 #include "../target-mips/mips-cache-opts.h"
 #include "mips/syscall_nr.h"
+#endif
 
 char *exec_path;
 

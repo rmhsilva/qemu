@@ -1610,7 +1610,7 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
     if (mips_cache_opts.use_d)
         gen_helper_dcache(cpu_env, t0, 1);
 #else
-   // gen_helper_dcache(cpu_env, t0);
+   printf("64-bit not yet implemented\n!");
 #endif
 
     switch (opc) {
@@ -1786,7 +1786,7 @@ static void gen_st (DisasContext *ctx, uint32_t opc, int rt,
     if (mips_cache_opts.use_d)
         gen_helper_dcache(cpu_env, t0, 0);
 #else
-    // gen_helper_dcache(cpu_env, t0);
+    printf("64-bit not yet implemented\n!");
 #endif
 
     gen_load_gpr(t1, rt);
