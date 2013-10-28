@@ -1606,14 +1606,12 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
     gen_base_offset_addr(ctx, t0, base, offset);
 
 /*GDP*/
-#ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
     if (mips_cache_opts.use_d)
         gen_helper_dcache(cpu_env, t0, 1);
 #else
    // gen_helper_dcache(cpu_env, t0);
 #endif
-#endif    
 
     switch (opc) {
 #if defined(TARGET_MIPS64)
@@ -1784,13 +1782,11 @@ static void gen_st (DisasContext *ctx, uint32_t opc, int rt,
     gen_base_offset_addr(ctx, t0, base, offset);
 
 /**GDP**/
-#ifndef CONFIG_USER_ONLY
 #if TARGET_LONG_BITS == 32
     if (mips_cache_opts.use_d)
         gen_helper_dcache(cpu_env, t0, 0);
 #else
     // gen_helper_dcache(cpu_env, t0);
-#endif
 #endif
 
     gen_load_gpr(t1, rt);
@@ -2224,22 +2220,22 @@ static void gen_cache_op(DisasContext *ctx, uint32_t opc,
         case 0: // I-Cache
             switch(op & 0x1C) {     // And now on operation bits
                 case 0:
-                    gen_helper_0e0i(cache_invalidate, addr);
+                    gen_helper_0e0i(cache_invalidate_i, addr);
                 break;
                 case 1:
-                    gen_helper_0e0i(cache_load_tag, addr);
+                    gen_helper_0e0i(cache_load_tag_i, addr);
                 break;
                 case 2:
-                    gen_helper_0e0i(cache_store_tag, addr);
+                    gen_helper_0e0i(cache_store_tag_i, addr);
                 break;
                 case 4:
-                    gen_helper_0e0i(cache_hit_invalidate, addr);
+                    gen_helper_0e0i(cache_hit_invalidate_i, addr);
                 break;
                 case 5:
-                    gen_helper_0e0i(cache_fill, addr);
+                    gen_helper_0e0i(cache_fill_i, addr);
                 break;
                 case 7:
-                    gen_helper_0e0i(cache_fetch_lock, addr);
+                    gen_helper_0e0i(cache_fetch_lock_i, addr);
                 break;
                 case 6: // No-op for writethrough cache!
                 case 3: // Optional
