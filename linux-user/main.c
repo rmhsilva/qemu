@@ -3298,6 +3298,7 @@ void init_task_state(TaskState *ts)
     ts->sigqueue_table[i].next = NULL;
 }
 
+#ifdef TARGET_MIPS
 /* GDP option handlers */
 static void handle_arg_dcache(const char *arg)
 {
@@ -3335,10 +3336,8 @@ static void handle_arg_l2cache(const char *arg)
           mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
           mips_cache_opts.l2_index_width,mips_cache_opts.l2_type);
 }
-
-
 /* GDP option handlers end */
-
+#endif
 
 static void handle_arg_help(const char *arg)
 {
@@ -3551,6 +3550,8 @@ static const struct qemu_argument arg_table[] = {
      "",           "log system calls"},
     {"version",    "QEMU_VERSION",     false, handle_arg_version,
      "",           "display version information and exit"},
+
+#ifdef TARGET_MIPS
 /* GDP cache options */
     {"dcache",    "QEMU_CACHE_D",     true, handle_arg_dcache,
      "nxm_tp",           "choose d-cache size and type"},
@@ -3558,7 +3559,7 @@ static const struct qemu_argument arg_table[] = {
      "nxm_tp",           "choose i-cache size and type"},
     {"l2cache",    "QEMU_CACHE_L2",     true, handle_arg_l2cache,
      "nxm_tp",           "choose L2 cache size and type"},
-
+#endif
     {NULL, NULL, false, NULL, NULL, NULL}
 };
 
