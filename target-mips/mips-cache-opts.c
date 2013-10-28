@@ -188,14 +188,21 @@ void log_cache_data(void)
         char fname[60] = "log-icache-";
         pstrcat(fname, 60, mips_cache_opts.i_opt);
         FILE *fd = fopen(fname, "w");
-        printf("Logging icache data (%s)\n", fname);
-        
-        for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
-            fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
-                mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
+
+        if (fd) {
+            printf("Logging icache data (%s)\n", fname);
+            
+            for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
+                fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
+                    mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
+            }
+
+            fclose(fd);
+        }
+        else {
+            printf("Failed to open file %s\n", fname);
         }
 
-        fclose(fd);
         free(mips_cache_opts.i_hit_cnt);
         free(mips_cache_opts.i_miss_cnt);
     }
@@ -204,15 +211,22 @@ void log_cache_data(void)
         char fname[60] = "log-dcache-";
         pstrcat(fname, 60, mips_cache_opts.d_opt);
         FILE *fd = fopen(fname, "w");
-        printf("Logging dcache data (%s)\n", fname);
 
-        for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
-            fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
-                mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
-                mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
+        if (fd) {
+            printf("Logging dcache data (%s)\n", fname);
+
+            for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
+                fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
+                    mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
+                    mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
+            }
+
+            fclose(fd);
+        }
+        else {
+            printf("Failed to open file %s\n", fname);
         }
 
-        fclose(fd);
         free(mips_cache_opts.d_ld_hit_cnt);
         free(mips_cache_opts.d_st_hit_cnt);
         free(mips_cache_opts.d_ld_miss_cnt);

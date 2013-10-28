@@ -1608,7 +1608,7 @@ static void gen_ld(DisasContext *ctx, uint32_t opc,
 /*GDP*/
 #if TARGET_LONG_BITS == 32
     if (mips_cache_opts.use_d)
-        gen_helper_dcache(cpu_env, t0, 1);
+        gen_helper_dcache_ld(cpu_env, t0);
 #else
    printf("64-bit not yet implemented\n!");
 #endif
@@ -1784,7 +1784,7 @@ static void gen_st (DisasContext *ctx, uint32_t opc, int rt,
 /**GDP**/
 #if TARGET_LONG_BITS == 32
     if (mips_cache_opts.use_d)
-        gen_helper_dcache(cpu_env, t0, 0);
+        gen_helper_dcache_st(cpu_env, t0);
 #else
     printf("64-bit not yet implemented\n!");
 #endif

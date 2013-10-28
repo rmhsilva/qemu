@@ -141,7 +141,11 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 }
 
 
-void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load) 
+/**
+ * This is called by the two d-cache helpers:
+ */
+static inline void 
+helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load) 
 {
     /* if is_load is 0 then it is a store instruction */
 #ifndef CONFIG_USER_ONLY 
@@ -150,18 +154,19 @@ void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load)
     hwaddr phys_address = (hwaddr)addr;
 #endif
 
-    uint32_t idx = DECODE_INDEX_L1I(phys_address);
-    uint32_t tag = DECODE_TAG_L1I(phys_address);
+    uint32_t idx = DECODE_INDEX_L1D(phys_address);
+    uint32_t tag = DECODE_TAG_L1D(phys_address);
 
     uint8_t miss = lookup_l1(env->cache->dcache, idx, tag);
     
     // TODO: dirty bit etc for write-back?
-
+    
     if (!miss) {
         if (is_load)
             mips_cache_opts.d_ld_hit_cnt[idx]++;
-        else
+        else {
             mips_cache_opts.d_st_hit_cnt[idx]++;
+        }
     }
     else {
         if (is_load)
@@ -169,6 +174,13 @@ void helper_dcache(CPUMIPSState *env, target_ulong addr, int is_load)
         else
             mips_cache_opts.d_st_miss_cnt[idx]++;
     }
+}
+
+void helper_dcache_ld(CPUMIPSState *env, target_ulong addr) {
+    helper_dcache(env, addr, 1);
+}
+void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
+    helper_dcache(env, addr, 0);
 }
 
 

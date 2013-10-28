@@ -4,7 +4,8 @@ DEF_HELPER_3(raise_exception_err, noreturn, env, i32, int)
 DEF_HELPER_2(raise_exception, noreturn, env, i32)
 
 /**GDP**/
-DEF_HELPER_3(dcache, void, env, tl, int)
+DEF_HELPER_2(dcache_ld, void, env, tl)
+DEF_HELPER_2(dcache_st, void, env, tl)
 DEF_HELPER_3(icache, void, env, tl, i32)
 DEF_HELPER_2(cache_invalidate_i, void, env, i32)
 DEF_HELPER_2(cache_load_tag_i, void, env, i32)
