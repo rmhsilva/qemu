@@ -193,7 +193,7 @@ void log_cache_data(void)
             printf("Logging icache data (%s)\n", fname);
             
             for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
-                fprintf(fd, "%x,%"PRIx64",%"PRIx64"\n", i,
+                fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
                     mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
             }
 
@@ -216,7 +216,7 @@ void log_cache_data(void)
             printf("Logging dcache data (%s)\n", fname);
 
             for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
-                fprintf(fd, "%x,%"PRIx64",%"PRIx64",%"PRIx64",%"PRIx64"\n", i,
+                fprintf(fd, "%d,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n", i,
                     mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
                     mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
             }
