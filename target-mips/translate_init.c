@@ -649,7 +649,8 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 #define LOGFILE_NAME_LEN 45
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
-    printf("Initialising cache... ");
+    if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
+      printf("Initialising cache... ");
     
     // allocate the cache context memory...
     env->cache = (CPUMIPSCacheContext *)g_malloc0(sizeof(CPUMIPSCacheContext));
@@ -669,7 +670,7 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
         env->cache->l2cache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.l2_no_of_lines);
     }
-    
-    printf("Done.\n");
+    if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
+      printf("Done.\n");
 }
 /**GDP**/

@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "qemu-common.h"
 #include "mips-cache-opts.h"
 #include "cpu.h"
 
@@ -26,6 +27,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     "*** Error: MIPS cache options are only supported in MIPS target\n");
     return 1;
 #else
+    fprintf(stderr,"MIPS included \n");
     unsigned char *type;
     unsigned int *no_of_lines;
     /* offset width includes bits used to address bytes in a word */
@@ -39,6 +41,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* D-cache */
     if(which_cache == 'd')
     {
+        pstrcpy(mips_cache_opts.d_opt,10,arg);
         mips_cache_opts.use_d = 1; 
         type = &mips_cache_opts.d_type;
         no_of_lines = &mips_cache_opts.d_no_of_lines;
@@ -49,6 +52,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* I-cache */
     else if(which_cache == 'i')
     {
+        pstrcpy(mips_cache_opts.i_opt,10,arg);
         mips_cache_opts.use_i = 1;
         type = &mips_cache_opts.i_type;
         no_of_lines = &mips_cache_opts.i_no_of_lines;
@@ -59,6 +63,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* L2-cache */
     else if(which_cache == 'u')
     {
+        pstrcpy(mips_cache_opts.l2_opt,12,arg);
         mips_cache_opts.use_l2 = 1; 
         type = &mips_cache_opts.l2_type;
         no_of_lines = &mips_cache_opts.l2_no_of_lines;
@@ -205,6 +210,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 
 void log_cache_data(void)
 {
+#ifdef TARGET_MIPS
     int i;
     if (mips_cache_opts.use_i) {
         char fname[60] = "log-icache-";
@@ -289,6 +295,7 @@ void log_cache_data(void)
         mips_cache_opts.l2_miss_cnt = NULL;
 
     }
+#endif
 }
 
 /* Returns 0 if n is 0 */

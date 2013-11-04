@@ -2218,36 +2218,42 @@ static void gen_cache_op(DisasContext *ctx, uint32_t opc,
 
     switch(op & 0x03) {             // Switch on cache selection bits
         case 0: // I-Cache
-            switch(op & 0x1C) {     // And now on operation bits
-                case 0:
-                    gen_helper_0e0i(cache_invalidate_i, addr);
-                break;
-                case 1:
-                    gen_helper_0e0i(cache_load_tag_i, addr);
-                break;
-                case 2:
-                    gen_helper_0e0i(cache_store_tag_i, addr);
-                break;
-                case 4:
-                    gen_helper_0e0i(cache_hit_invalidate_i, addr);
-                break;
-                case 5:
-                    gen_helper_0e0i(cache_fill_i, addr);
-                break;
-                case 7:
-                    gen_helper_0e0i(cache_fetch_lock_i, addr);
-                break;
-                case 6: // No-op for writethrough cache!
-                case 3: // Optional
-                default:
-                break;
+            if(mips_cache_opts.use_i) {
+                switch(op & 0x1C) {     // And now on operation bits
+                    case 0:
+                        gen_helper_0e0i(cache_invalidate_i, addr);
+                    break;
+                    case 1:
+                        gen_helper_0e0i(cache_load_tag_i, addr);
+                    break;
+                    case 2:
+                        gen_helper_0e0i(cache_store_tag_i, addr);
+                    break;
+                    case 4:
+                        gen_helper_0e0i(cache_hit_invalidate_i, addr);
+                    break;
+                    case 5:
+                        gen_helper_0e0i(cache_fill_i, addr);
+                    break;
+                    case 7:
+                        gen_helper_0e0i(cache_fetch_lock_i, addr);
+                    break;
+                    case 6: // No-op for writethrough cache!
+                    case 3: // Optional
+                    default:
+                    break;
+                }
             }
         break;
 
         case 1: // D-Cache
+            if(mips_cache_opts.use_d)
+            {}
         break;
 
         case 3: // L2 Cache
+            if(mips_cache_opts.use_l2)
+            {}
         break;
 
         case 2: // L3: No-op

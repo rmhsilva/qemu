@@ -2860,9 +2860,6 @@ int main(int argc, char **argv, char **envp)
     const char *trace_events = NULL;
     const char *trace_file = NULL;
 
-    #ifdef MIPS_CACHE_LOG
-    printf("LALALAL\n");
-  #endif
     /*GDP argument test*/
     for(i = 0; i < argc; i = i + 1)
     {
@@ -2982,7 +2979,6 @@ int main(int argc, char **argv, char **envp)
             switch(popt->index) {
 /* GDP MIPS cache size and type options */
             case QEMU_OPTION_dcache:
-                pstrcpy(mips_cache_opts.d_opt,10,optarg);
                 if(proc_mips_cache_opt('d',optarg))
                 {
                     /* Error in processing option argument */
@@ -2994,7 +2990,6 @@ int main(int argc, char **argv, char **envp)
                 break;
 
             case QEMU_OPTION_icache:
-                pstrcpy(mips_cache_opts.i_opt,10,optarg);
                 if(proc_mips_cache_opt('i',optarg))
                 {
                     /* Error in processing option argument */
@@ -3006,7 +3001,6 @@ int main(int argc, char **argv, char **envp)
                 break;
 
             case QEMU_OPTION_l2cache:
-                pstrcpy(mips_cache_opts.l2_opt,12,optarg);
                 if(proc_mips_cache_opt('u',optarg))
                 {
                     /* Error in processing option argument */
