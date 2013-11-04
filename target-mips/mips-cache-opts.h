@@ -11,6 +11,7 @@
 /* offset_width includes LSBs which address bytes in a word */
 /* index_mask is a mask after shifting address by offset_width to the right */
 
+
 #ifndef MIPS_CACHE_OPTS
 #define MIPS_CACHE_OPTS
 

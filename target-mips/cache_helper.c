@@ -59,14 +59,14 @@ fill_line (cache_item_t *cache, uint32_t index, uint32_t tag)
 }
 
 /**
- * lookup_l1: Lookup data in an L1 cache
+ * lookup_cache: Lookup data in a cache (L1/L2)
  * @param  *cache  Pointer to the cache memory
  * @param  index   Cache line to use
  * @param  tag     Tag of required memory
  * @return         0: hit, 1: miss
  */
 static inline uint8_t 
-lookup_l1 (cache_item_t *cache, uint32_t index, uint32_t tag)
+lookup_cache (cache_item_t *cache, uint32_t index, uint32_t tag)
 {
     uint32_t current_tag = cache[index].tag;
     
@@ -119,24 +119,39 @@ fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
     DECODE_INDEX(addr, mips_cache_opts.d_index_mask, mips_cache_opts.d_offset_width)
 #define DECODE_INDEX_L1I(addr) \
     DECODE_INDEX(addr, mips_cache_opts.i_index_mask, mips_cache_opts.i_offset_width)
+#define DECODE_INDEX_L2(addr) \
+    DECODE_INDEX(addr, mips_cache_opts.l2_index_mask, mips_cache_opts.l2_offset_width)
 #define DECODE_TAG_L1D(addr) \
     DECODE_TAG(addr, mips_cache_opts.d_index_width+mips_cache_opts.d_offset_width)
 #define DECODE_TAG_L1I(addr) \
     DECODE_TAG(addr, mips_cache_opts.i_index_width+mips_cache_opts.i_offset_width)
-
+#define DECODE_TAG_L2(addr) \
+    DECODE_TAG(addr, mips_cache_opts.l2_index_width+mips_cache_opts.l2_offset_width)
 
 void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 {
-    uint32_t idx = DECODE_INDEX_L1I(pc_addr);
-    uint32_t tag = DECODE_TAG_L1I(pc_addr);
+    uint32_t idx_l1 = DECODE_INDEX_L1I(pc_addr);
+    uint32_t tag_l1 = DECODE_TAG_L1I(pc_addr);
+    uint32_t idx_l2, tag_l2;
+    uint8_t miss_l2;
+    
+    uint8_t miss_l1 = lookup_cache(env->cache->icache, idx_l1, tag_l1);
 
-    uint8_t miss = lookup_l1(env->cache->icache, idx, tag);
-
-    if (!miss) {
-        mips_cache_opts.i_hit_cnt[idx]++;
+    if (!miss_l1) {
+        mips_cache_opts.i_hit_cnt[idx_l1]++;
     }
     else {
-        mips_cache_opts.i_miss_cnt[idx]++;
+        mips_cache_opts.i_miss_cnt[idx_l1]++;
+
+        if(mips_cache_opts.use_l2) {
+            idx_l2 = DECODE_INDEX_L2(pc_addr);
+            tag_l2 = DECODE_TAG_L2(pc_addr);
+            miss_l2 = lookup_cache(env->cache->l2cache, idx_l2, tag_l2);
+            if (!miss_l2)
+                mips_cache_opts.l2_hit_cnt[idx_l2]++;
+            else
+                mips_cache_opts.l2_miss_cnt[idx_l2]++;
+        }
     }
 }
 
@@ -154,25 +169,36 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     hwaddr phys_address = (hwaddr)addr;
 #endif
 
-    uint32_t idx = DECODE_INDEX_L1D(phys_address);
-    uint32_t tag = DECODE_TAG_L1D(phys_address);
+    uint32_t idx_l1 = DECODE_INDEX_L1D(phys_address);
+    uint32_t tag_l1 = DECODE_TAG_L1D(phys_address);
+    uint32_t idx_l2, tag_l2;
+    uint8_t miss_l2;
 
-    uint8_t miss = lookup_l1(env->cache->dcache, idx, tag);
+    uint8_t miss_l1 = lookup_cache(env->cache->dcache, idx_l1, tag_l1);
     
     // TODO: dirty bit etc for write-back?
     
-    if (!miss) {
+    if (!miss_l1) {
         if (is_load)
-            mips_cache_opts.d_ld_hit_cnt[idx]++;
+            mips_cache_opts.d_ld_hit_cnt[idx_l1]++;
         else {
-            mips_cache_opts.d_st_hit_cnt[idx]++;
+            mips_cache_opts.d_st_hit_cnt[idx_l1]++;
         }
     }
     else {
         if (is_load)
-            mips_cache_opts.d_ld_miss_cnt[idx]++;
+            mips_cache_opts.d_ld_miss_cnt[idx_l1]++;
         else
-            mips_cache_opts.d_st_miss_cnt[idx]++;
+            mips_cache_opts.d_st_miss_cnt[idx_l1]++;
+        if(mips_cache_opts.use_l2) {
+            idx_l2 = DECODE_INDEX_L2(phys_address);
+            tag_l2 = DECODE_TAG_L2(phys_address);
+            miss_l2 = lookup_cache(env->cache->l2cache, idx_l2, tag_l2);
+            if (!miss_l2)
+                mips_cache_opts.l2_hit_cnt[idx_l2]++;
+            else
+                mips_cache_opts.l2_miss_cnt[idx_l2]++;
+        }
     }
 }
 

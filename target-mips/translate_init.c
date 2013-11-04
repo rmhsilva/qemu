@@ -665,9 +665,10 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.d_no_of_lines);
     }
 
-    // TODO: L2 cache
-    // if (mips_cache_opts.)
-    //     pstrcat(logfile, LOGFILE_NAME_LEN, mips_cache_opts.l2_opt);
+    if (mips_cache_opts.use_l2) {
+        env->cache->l2cache =
+            (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.l2_no_of_lines);
+    }
     
     printf("Done.\n");
 }

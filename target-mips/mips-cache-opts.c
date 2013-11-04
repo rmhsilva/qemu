@@ -20,7 +20,12 @@
 struct MipsCacheOpts mips_cache_opts = {"","","",0};
 
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
-{  
+{
+#ifndef TARGET_MIPS  
+    fprintf(stderr,
+    "*** Error: MIPS cache options are only supported in MIPS target\n");
+    return 1;
+#else
     unsigned char *type;
     unsigned int *no_of_lines;
     /* offset width includes bits used to address bytes in a word */
@@ -161,6 +166,22 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     *no_of_lines = tmp1;
     *index_mask = tmp1 - 1;
 
+    /* Check if line size of L2 is greater than line size of L1 */
+    if((which_cache != 'u' && mips_cache_opts.use_l2
+        && *offset_width > mips_cache_opts.l2_offset_width) ||
+        (which_cache == 'u' &&
+          ((mips_cache_opts.use_i &&
+            *offset_width < mips_cache_opts.i_offset_width) ||
+          (mips_cache_opts.use_d &&
+            *offset_width < mips_cache_opts.d_offset_width))
+        )
+    )
+    {
+      fprintf(stderr,"*** Error: Number of entries in a L2 cache line must be" 
+          " equal or greater than \nno. of entries in a L1 cache line\n");
+      return 1;      
+    }
+
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
         mips_cache_opts.d_ld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
@@ -178,6 +199,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     }
 
     return 0; 
+#endif
 }
 
 
@@ -205,6 +227,9 @@ void log_cache_data(void)
 
         free(mips_cache_opts.i_hit_cnt);
         free(mips_cache_opts.i_miss_cnt);
+        mips_cache_opts.i_hit_cnt = NULL;
+        mips_cache_opts.i_miss_cnt = NULL;
+
     }
 
     if (mips_cache_opts.use_d) {
@@ -231,9 +256,39 @@ void log_cache_data(void)
         free(mips_cache_opts.d_st_hit_cnt);
         free(mips_cache_opts.d_ld_miss_cnt);
         free(mips_cache_opts.d_st_miss_cnt);
+
+        mips_cache_opts.d_ld_hit_cnt = NULL;
+        mips_cache_opts.d_st_hit_cnt = NULL;
+        mips_cache_opts.d_ld_miss_cnt = NULL;
+        mips_cache_opts.d_st_miss_cnt = NULL;
+
     }
 
-    // TODO: L2
+    if (mips_cache_opts.use_l2) {
+        char fname[60] = "log-l2cache-";
+        pstrcat(fname, 60, mips_cache_opts.l2_opt);
+        FILE *fd = fopen(fname, "w");
+
+        if (fd) {
+            printf("Logging L2 cache data (%s)\n", fname);
+            
+            for (i=0; i<mips_cache_opts.l2_no_of_lines; i++) {
+                fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
+                    mips_cache_opts.l2_hit_cnt[i], mips_cache_opts.l2_miss_cnt[i]);
+            }
+
+            fclose(fd);
+        }
+        else {
+            printf("Failed to open file %s\n", fname);
+        }
+
+        free(mips_cache_opts.l2_hit_cnt);
+        free(mips_cache_opts.l2_miss_cnt);
+        mips_cache_opts.l2_hit_cnt = NULL;
+        mips_cache_opts.l2_miss_cnt = NULL;
+
+    }
 }
 
 /* Returns 0 if n is 0 */

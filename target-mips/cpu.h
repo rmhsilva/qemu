@@ -65,6 +65,7 @@ typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
 struct CPUMIPSCacheContext {
     cache_item_t *icache;
     cache_item_t *dcache;
+    cache_item_t *l2cache;
     struct MipsCacheOpts *opts;
 };
 /**GDP**/
