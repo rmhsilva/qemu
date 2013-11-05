@@ -169,15 +169,19 @@ lookup_cache_4w (cache_item_t *cache, uint32_t index,
 #define DECODE_TAG_L2(addr) \
     DECODE_TAG(addr, mips_cache_opts.l2_index_width+mips_cache_opts.l2_offset_width)
 
+
+/**
+ * Main I-Cache helper function:
+ */
 void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 {
     uint32_t idx_l1 = DECODE_INDEX_L1I(pc_addr);
     uint32_t tag_l1 = DECODE_TAG_L1I(pc_addr);
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
-    
-    uint8_t miss_l1 = lookup_cache_dm(env->cache->icache, idx_l1,
-                        tag_l1, mips_cache_opts.i_way_mask);
+
+    uint8_t miss_l1 = (*env->cache->lookup_cache_i)(env->cache->icache,
+                        idx_l1, tag_l1, mips_cache_opts.i_way_mask);
 
     if (!miss_l1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
@@ -188,8 +192,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
         if(mips_cache_opts.use_l2) {
             idx_l2 = DECODE_INDEX_L2(pc_addr);
             tag_l2 = DECODE_TAG_L2(pc_addr);
-            miss_l2 = lookup_cache_dm(env->cache->l2cache, idx_l2,
-                        tag_l2, mips_cache_opts.l2_way_mask);
+            miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
+                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask);
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -217,8 +221,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    uint8_t miss_l1 = lookup_cache_dm(env->cache->dcache, idx_l1,
-                        tag_l1, mips_cache_opts.d_way_mask);
+    uint8_t miss_l1 = (*env->cache->lookup_cache_d)(env->cache->dcache,
+                        idx_l1, tag_l1, mips_cache_opts.d_way_mask);
     
     // TODO: dirty bit etc for write-back?
     
@@ -237,8 +241,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
         if(mips_cache_opts.use_l2) {
             idx_l2 = DECODE_INDEX_L2(phys_address);
             tag_l2 = DECODE_TAG_L2(phys_address);
-            miss_l2 = lookup_cache_dm(env->cache->l2cache, idx_l2,
-                        tag_l2, mips_cache_opts.l2_way_mask);
+            miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
+                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask);
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -255,7 +259,7 @@ void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
 }
 
 
-// XXX Must add d-cache helpers like the i-cache helpers below
+// TODO Must add d-cache helpers like the i-cache helpers below
 
 void helper_cache_invalidate_i(CPUMIPSState *env, unsigned int addr)
 {

@@ -646,7 +646,19 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 
 /**GDP**/
-#define LOGFILE_NAME_LEN 45
+#define SWITCH_FUNCTION(type) switch(mips_cache_opts.type##_way_width) {     \
+    case 0:                                                                    \
+        env->cache->lookup_cache_##type = &lookup_cache_dm;                   \
+    break;                                                                     \
+    case 1:                                                                    \
+        env->cache->lookup_cache_##type = &lookup_cache_2w;                   \
+    break;                                                                     \
+    case 2:                                                                    \
+        env->cache->lookup_cache_##type = &lookup_cache_4w;                   \
+    break;                                                                     \
+}
+
+
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
     if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
@@ -659,18 +671,22 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
     if (mips_cache_opts.use_i) {
         env->cache->icache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.i_no_of_lines);
+        SWITCH_FUNCTION(i);
     }
 
     if (mips_cache_opts.use_d) {
         env->cache->dcache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.d_no_of_lines);
+        SWITCH_FUNCTION(d);
     }
 
     if (mips_cache_opts.use_l2) {
         env->cache->l2cache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.l2_no_of_lines);
+        SWITCH_FUNCTION(l2);
     }
+
     if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
-      printf("Done.\n");
+        printf("Done.\n");
 }
 /**GDP**/
