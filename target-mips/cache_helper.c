@@ -59,33 +59,6 @@ fill_line (cache_item_t *cache, uint32_t index, uint32_t tag)
 }
 
 /**
- * lookup_cache: Lookup data in a cache (L1/L2)
- * @param  *cache  Pointer to the cache memory
- * @param  index   Cache line to use
- * @param  tag     Tag of required memory
- * @return         0: hit, 1: miss
- */
-static inline uint8_t 
-lookup_cache (cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    uint32_t current_tag = cache[index].tag;
-    
-    if ((current_tag==tag) && (cache[index].valid==1)) {
-        return 0;
-    }
-    else {
-        if(cache[index].lock == 0) {   
-            cache[index].tag = tag;
-            cache[index].valid = 1;
-        }
-        else {
-            printf("Line Locked!!\n");
-        }
-        return 1;
-    }
-}
-
-/**
  * hit_invalidate: mark a line as invalid IF it is currently valid
  */
 static inline void
@@ -108,6 +81,71 @@ fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
     cache[index].lock = 1;
 }
 
+/**
+ * lookup_cache: Lookup data in a cache (L1/L2)
+ * @param  *cache     Pointer to the cache memory
+ * @param  index      Cache line to use
+ * @param  tag        Tag of required memory
+ * @param  way_width  0: direct-mapped, 1: 2-way set-associative, 2: 4-way s.-a.
+ * @return            0: hit, 1: miss
+ */
+inline uint8_t 
+lookup_cache_dm (cache_item_t *cache, uint32_t index,
+              uint32_t tag, unsigned int *mask)
+{
+    if(cache[index].tag == tag && cache[index].valid == 1)
+        return 0;
+    else {
+        if(cache[index].lock == 0) {   
+            cache[index].tag = tag;
+            cache[index].valid = 1;
+        }
+        else {
+            printf("Line Locked!!\n");
+        }
+        return 1;
+    }
+}
+
+inline uint8_t 
+lookup_cache_2w (cache_item_t *cache, uint32_t index,
+              uint32_t tag, unsigned int *mask)
+{
+    if((cache[index].tag == tag && cache[index].valid == 1) ||
+      (cache[index | mask[0]].tag == tag && cache[index | mask[0]].valid == 1))
+        return 0;
+    else {
+        if(cache[index].lock == 0) {   
+            cache[index].tag = tag;
+            cache[index].valid = 1;
+        }
+        else {
+            printf("Line Locked!!\n");
+        }
+        return 1;
+    }
+}
+
+inline uint8_t 
+lookup_cache_4w (cache_item_t *cache, uint32_t index,
+              uint32_t tag, unsigned int *mask)
+{
+    if((cache[index].tag == tag && cache[index].valid == 1) ||
+      (cache[index | mask[0]].tag == tag && cache[index | mask[0]].valid == 1) ||
+      (cache[index | mask[1]].tag == tag && cache[index | mask[1]].valid == 1) ||
+      (cache[index | mask[2]].tag == tag && cache[index | mask[2]].valid == 1))
+        return 0;
+    else {
+        if(cache[index].lock == 0) {   
+            cache[index].tag = tag;
+            cache[index].valid = 1;
+        }
+        else {
+            printf("Line Locked!!\n");
+        }
+        return 1;
+    }
+}
 
 /*****************************************************************************/
 // QEMU Helpers
@@ -116,11 +154,14 @@ fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
 #define DECODE_TAG(addr,idx_width) ((addr) >> (idx_width))
 
 #define DECODE_INDEX_L1D(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.d_index_mask, mips_cache_opts.d_offset_width)
+    DECODE_INDEX(addr, mips_cache_opts.d_index_mask >> mips_cache_opts.d_way_width, \
+    mips_cache_opts.d_offset_width)
 #define DECODE_INDEX_L1I(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.i_index_mask, mips_cache_opts.i_offset_width)
+    DECODE_INDEX(addr, mips_cache_opts.i_index_mask >> mips_cache_opts.i_way_width, \
+    mips_cache_opts.i_offset_width)
 #define DECODE_INDEX_L2(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.l2_index_mask, mips_cache_opts.l2_offset_width)
+    DECODE_INDEX(addr, mips_cache_opts.l2_index_mask >> mips_cache_opts.l2_way_width, \
+    mips_cache_opts.l2_offset_width)
 #define DECODE_TAG_L1D(addr) \
     DECODE_TAG(addr, mips_cache_opts.d_index_width+mips_cache_opts.d_offset_width)
 #define DECODE_TAG_L1I(addr) \
@@ -135,7 +176,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
     
-    uint8_t miss_l1 = lookup_cache(env->cache->icache, idx_l1, tag_l1);
+    uint8_t miss_l1 = lookup_cache_dm(env->cache->icache, idx_l1,
+                        tag_l1, mips_cache_opts.i_way_mask);
 
     if (!miss_l1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
@@ -146,7 +188,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
         if(mips_cache_opts.use_l2) {
             idx_l2 = DECODE_INDEX_L2(pc_addr);
             tag_l2 = DECODE_TAG_L2(pc_addr);
-            miss_l2 = lookup_cache(env->cache->l2cache, idx_l2, tag_l2);
+            miss_l2 = lookup_cache_dm(env->cache->l2cache, idx_l2,
+                        tag_l2, mips_cache_opts.l2_way_mask);
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -174,7 +217,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    uint8_t miss_l1 = lookup_cache(env->cache->dcache, idx_l1, tag_l1);
+    uint8_t miss_l1 = lookup_cache_dm(env->cache->dcache, idx_l1,
+                        tag_l1, mips_cache_opts.d_way_mask);
     
     // TODO: dirty bit etc for write-back?
     
@@ -193,7 +237,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
         if(mips_cache_opts.use_l2) {
             idx_l2 = DECODE_INDEX_L2(phys_address);
             tag_l2 = DECODE_TAG_L2(phys_address);
-            miss_l2 = lookup_cache(env->cache->l2cache, idx_l2, tag_l2);
+            miss_l2 = lookup_cache_dm(env->cache->l2cache, idx_l2,
+                        tag_l2, mips_cache_opts.l2_way_mask);
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else

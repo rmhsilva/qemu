@@ -27,8 +27,9 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     "*** Error: MIPS cache options are only supported in MIPS target\n");
     return 1;
 #else
-    fprintf(stderr,"MIPS included \n");
     unsigned char *type;
+    unsigned char *way_width;
+    unsigned int **way_mask;
     unsigned int *no_of_lines;
     /* offset width includes bits used to address bytes in a word */
     unsigned int *offset_width;
@@ -44,6 +45,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         pstrcpy(mips_cache_opts.d_opt,10,arg);
         mips_cache_opts.use_d = 1; 
         type = &mips_cache_opts.d_type;
+        way_width = &mips_cache_opts.d_way_width;
+        way_mask = &mips_cache_opts.d_way_mask;
         no_of_lines = &mips_cache_opts.d_no_of_lines;
         offset_width = &mips_cache_opts.d_offset_width;
         index_width = &mips_cache_opts.d_index_width;
@@ -55,6 +58,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         pstrcpy(mips_cache_opts.i_opt,10,arg);
         mips_cache_opts.use_i = 1;
         type = &mips_cache_opts.i_type;
+        way_width = &mips_cache_opts.i_way_width;
+        way_mask = &mips_cache_opts.i_way_mask;
         no_of_lines = &mips_cache_opts.i_no_of_lines;
         offset_width = &mips_cache_opts.i_offset_width;
         index_width = &mips_cache_opts.i_index_width;
@@ -66,6 +71,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         pstrcpy(mips_cache_opts.l2_opt,12,arg);
         mips_cache_opts.use_l2 = 1; 
         type = &mips_cache_opts.l2_type;
+        way_width = &mips_cache_opts.l2_way_width;
+        way_mask = &mips_cache_opts.l2_way_mask;
         no_of_lines = &mips_cache_opts.l2_no_of_lines;
         offset_width = &mips_cache_opts.l2_offset_width;
         index_width = &mips_cache_opts.l2_index_width;
@@ -86,16 +93,6 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         return 1;        
     }
 
-    /* Check cache type */
-    if(!strcmp(tmp2,"dm")){*type = 'd';}
-    else if(!strcmp(tmp2,"2w")){*type = '2';}
-    else if(!strcmp(tmp2,"4w")){*type = '4';}
-    else
-    {
-        fprintf(stderr,
-            "*** Error: Unrecognised type of %c-cache\n",which_cache);
-        return 1;       
-    }
     
     /* Check no of words in each cache line and number of lines */
     if(which_cache != 'u') /* d-cache and i-cache */
@@ -185,6 +182,32 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
       fprintf(stderr,"*** Error: Number of entries in a L2 cache line must be" 
           " equal or greater than \nno. of entries in a L1 cache line\n");
       return 1;      
+    }
+
+    /* Check cache type */
+    if(!strcmp(tmp2,"dm")) {
+        *type = 'd';
+        *way_width = 0;
+    }
+    else if(!strcmp(tmp2,"2w")) {
+        *type = '2';
+        *way_width = 1;
+        *way_mask = (unsigned int *)g_malloc(sizeof(unsigned int));
+        (*way_mask)[0] = 1 << (*index_width - 1);
+    }
+    else if(!strcmp(tmp2,"4w")) {
+        *type = '4';
+        *way_width = 2;
+        *way_mask = (unsigned int *)g_malloc(3*sizeof(unsigned int));
+        (*way_mask)[0] = 1 << (*index_width - 2);
+        (*way_mask)[1] = 1 << (*index_width - 1);
+        (*way_mask)[2] = (*way_mask)[0] | (*way_mask)[1];          
+    }
+    else
+    {
+        fprintf(stderr,
+            "*** Error: Unrecognised type of %c-cache\n",which_cache);
+        return 1;       
     }
 
     // Allocate memory for hit/miss counters

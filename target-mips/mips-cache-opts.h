@@ -22,8 +22,13 @@ struct MipsCacheOpts {
     char i_opt[12];
     char l2_opt[12];
 
+    unsigned int *d_way_mask;
+    unsigned int *i_way_mask;
+    unsigned int *l2_way_mask;
+    
     unsigned char use_d;
     unsigned char d_type;
+    unsigned char d_way_width;
     unsigned int d_no_of_lines;
     unsigned int d_offset_width;
     unsigned int d_index_width;
@@ -31,14 +36,16 @@ struct MipsCacheOpts {
 
     unsigned char use_i;
     unsigned char i_type;
+    unsigned char i_way_width;
     unsigned int i_no_of_lines;
     unsigned int i_offset_width;
     unsigned int i_index_width;
     unsigned int i_index_mask;
 
     unsigned char use_l2;
-    unsigned int l2_no_of_lines;
     unsigned char l2_type;
+    unsigned char l2_way_width;
+    unsigned int l2_no_of_lines;
     unsigned int l2_offset_width;
     unsigned int l2_index_width;
     unsigned int l2_index_mask;
