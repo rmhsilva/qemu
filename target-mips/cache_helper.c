@@ -108,20 +108,73 @@ lookup_cache_dm (cache_item_t *cache, uint32_t index,
 }
 
 inline uint8_t 
-lookup_cache_2w (cache_item_t *cache, uint32_t index,
+lookup_cache_2w (cache_item_t *cache, uint32_t index0,
               uint32_t tag, unsigned int *mask)
 {
-    if((cache[index].tag == tag && cache[index].valid == 1) ||
-      (cache[index | mask[0]].tag == tag && cache[index | mask[0]].valid == 1))
+    uint32_t index1 = index0 | mask[0];
+    if((cache[index0].tag == tag && cache[index0].valid == 1) ||
+      (cache[index1].tag == tag && cache[index1].valid == 1))
         return 0;
-    else {
-        if(cache[index].lock == 0) {   
-            cache[index].tag = tag;
-            cache[index].valid = 1;
+    else
+    { /* Miss */
+        if(!cache[index0].valid && !cache[index0].lock)
+        {
+            cache[index0].tag = tag;
+            cache[index0].valid = 1;
+            cache[index0].r_field = 1;
+            cache[index1].r_field = 0;
         }
-        else {
-            printf("Line Locked!!\n");
+        else if(!cache[index0].valid && cache[index0].lock)
+        {
+            fprintf(stderr, "*** Error: Line %x in way 0 invalid and locked!\n",
+                index0);
+            exit(1);
         }
+        else if(!cache[index1].valid && !cache[index1].lock)
+        {
+            cache[index1].tag = tag;
+            cache[index1].valid = 1;
+            cache[index1].r_field = 1;
+            cache[index0].r_field = 0;
+        }
+        else if(!cache[index1].valid && cache[index1].lock)
+        {
+            fprintf(stderr, "*** Error: Line %x in way 1 invalid and locked!\n",
+                index0);
+            exit(1);
+        }
+        else if(cache[index0].lock && cache[index1].lock)
+        {
+            printf("Lines locked\n");
+        }
+        else if(cache[index0].lock)
+        {
+            cache[index1].tag = tag;
+            cache[index1].valid = 1;
+            cache[index1].r_field = 1;
+            cache[index0].r_field = 0;
+        }
+        else if(cache[index1].lock || cache[index0].r_field == 0)
+        {
+            cache[index0].tag = tag;
+            cache[index0].valid = 1;
+            cache[index0].r_field = 1;
+            cache[index1].r_field = 0;
+        }
+        else if(cache[index1].r_field == 0)
+        {
+            cache[index1].tag = tag;
+            cache[index1].valid = 1;
+            cache[index1].r_field = 1;
+            cache[index0].r_field = 0;
+        }
+        else
+        {
+            fprintf(stderr, "*** Error: Bad r_fields: %x %x in LRU replacement!\n",
+                cache[index0].r_field,cache[index1].r_field);
+            exit(1);
+        }
+
         return 1;
     }
 }

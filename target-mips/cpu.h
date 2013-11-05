@@ -56,9 +56,10 @@ struct CPUMIPSTLBContext {
 /**GDP**/
 typedef struct cache_item_t cache_item_t;
 struct cache_item_t {
-    uint_fast32_t tag  : 30;
-    uint_fast8_t valid : 1;
-    uint_fast8_t lock  : 1;
+    uint_fast32_t tag         : 30;
+    uint_fast8_t valid        : 1;
+    uint_fast8_t lock         : 1;
+    uint_fast32_t r_field     : 32;
 };
 
 typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
