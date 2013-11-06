@@ -91,7 +91,7 @@ fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
  */
 inline uint8_t 
 lookup_cache_dm (cache_item_t *cache, uint32_t index,
-              uint32_t tag, unsigned int *mask)
+              uint32_t tag, unsigned int *mask, uint8_t n_indexes)
 {
     if(cache[index].tag == tag && cache[index].valid == 1)
         return 0;
@@ -107,98 +107,152 @@ lookup_cache_dm (cache_item_t *cache, uint32_t index,
     }
 }
 
-inline uint8_t 
-lookup_cache_2w (cache_item_t *cache, uint32_t index0,
-              uint32_t tag, unsigned int *mask)
-{
-    uint32_t index1 = index0 | mask[0];
-    if((cache[index0].tag == tag && cache[index0].valid == 1) ||
-      (cache[index1].tag == tag && cache[index1].valid == 1))
-        return 0;
-    else
-    { /* Miss */
-        if(!cache[index0].valid && !cache[index0].lock)
-        {
-            cache[index0].tag = tag;
-            cache[index0].valid = 1;
-            cache[index0].r_field = 1;
-            cache[index1].r_field = 0;
-        }
-        else if(!cache[index0].valid && cache[index0].lock)
-        {
-            fprintf(stderr, "*** Error: Line %x in way 0 invalid and locked!\n",
-                index0);
-            exit(1);
-        }
-        else if(!cache[index1].valid && !cache[index1].lock)
-        {
-            cache[index1].tag = tag;
-            cache[index1].valid = 1;
-            cache[index1].r_field = 1;
-            cache[index0].r_field = 0;
-        }
-        else if(!cache[index1].valid && cache[index1].lock)
-        {
-            fprintf(stderr, "*** Error: Line %x in way 1 invalid and locked!\n",
-                index0);
-            exit(1);
-        }
-        else if(cache[index0].lock && cache[index1].lock)
-        {
-            printf("Lines locked\n");
-        }
-        else if(cache[index0].lock)
-        {
-            cache[index1].tag = tag;
-            cache[index1].valid = 1;
-            cache[index1].r_field = 1;
-            cache[index0].r_field = 0;
-        }
-        else if(cache[index1].lock || cache[index0].r_field == 0)
-        {
-            cache[index0].tag = tag;
-            cache[index0].valid = 1;
-            cache[index0].r_field = 1;
-            cache[index1].r_field = 0;
-        }
-        else if(cache[index1].r_field == 0)
-        {
-            cache[index1].tag = tag;
-            cache[index1].valid = 1;
-            cache[index1].r_field = 1;
-            cache[index0].r_field = 0;
-        }
-        else
-        {
-            fprintf(stderr, "*** Error: Bad r_fields: %x %x in LRU replacement!\n",
-                cache[index0].r_field,cache[index1].r_field);
-            exit(1);
-        }
 
-        return 1;
+static void
+lru_update(cache_item_t **cache_lines, uint32_t item_to_update, uint8_t n_indexes)
+{
+    int i;
+    uint32_t old_rfield = cache_lines[item_to_update]->r_field;
+    if(old_rfield == n_indexes - 1)
+        return;
+    for(i = 0; i < n_indexes; i = i + 1)
+    {
+        if(cache_lines[i]->r_field > old_rfield)
+            cache_lines[i]->r_field--;
     }
+    cache_lines[item_to_update]->r_field = n_indexes - 1;
 }
 
-inline uint8_t 
-lookup_cache_4w (cache_item_t *cache, uint32_t index,
-              uint32_t tag, unsigned int *mask)
+
+uint8_t replace_lru(cache_item_t *cache, uint32_t index, uint32_t tag,
+                    unsigned int *mask, uint8_t n_indexes)
 {
-    if((cache[index].tag == tag && cache[index].valid == 1) ||
-      (cache[index | mask[0]].tag == tag && cache[index | mask[0]].valid == 1) ||
-      (cache[index | mask[1]].tag == tag && cache[index | mask[1]].valid == 1) ||
-      (cache[index | mask[2]].tag == tag && cache[index | mask[2]].valid == 1))
-        return 0;
-    else {
-        if(cache[index].lock == 0) {   
-            cache[index].tag = tag;
-            cache[index].valid = 1;
+    uint32_t i, unlocked_cnt=0, min_r_field=(n_indexes-1), lru_idx=0;
+
+    // cache lines array
+    cache_item_t *lines[n_indexes];
+    for (i=0; i<n_indexes; i++)
+        lines[i] = &cache[index | mask[i]];
+
+    // Loop over all cache line indexes
+    for (i=0; i<n_indexes; i++) {
+        if (lines[i]->valid == 1) {  /* Line valid... */
+            if (lines[i]->tag == tag) {  /* ... and correct tag */
+                lru_update(lines, i, n_indexes);
+                return 0;
+            }
+            else if (!lines[i]->lock) {  /* ... and wrong tag and unlocked */
+                unlocked_cnt++;
+                if (lines[i]->r_field < min_r_field) { // Check if less used
+                    min_r_field = lines[i]->r_field;
+                    lru_idx = i;
+                }
+            }
         }
-        else {
-            printf("Line Locked!!\n");
+        else {  /* line invalid... */
+            if (lines[i]->lock) {    /* ...and locked */
+                fprintf(stderr, "*** Error: Line %x in way 0 invalid and locked!\n",
+                    index | mask[i]);
+                exit(1);
+            }  /* ...and unlocked */
+            lines[i]->tag = tag;
+            lines[i]->valid = 1;
+            lru_update(lines, i, n_indexes);
+            return 1;
         }
-        return 1;
     }
+
+    if (unlocked_cnt == 0) {  /* All lines valid and locked */
+        printf("All cache lines locked for index %x\n", index);
+    }
+    else {  /* All lines are valid and some are unlocked */
+        lines[lru_idx]->tag = tag;
+        lines[lru_idx]->valid = 1;
+        lru_update(lines, lru_idx, n_indexes);
+    }
+    return 1;
 }
+
+
+// inline uint8_t 
+// lookup_cache_2w (cache_item_t *cache, uint32_t index0,
+//                 uint32_t tag, unsigned int *mask,
+//                 void (*replace)(cache_item_t *,uint32_t,uint32_t *))
+// {
+//     uint32_t index1 = index0 | mask[0];
+//     if((cache[index0].tag == tag && cache[index0].valid == 1) ||
+//       (cache[index1].tag == tag && cache[index1].valid == 1))
+//         return 0;
+//     else
+//     { /* Miss */
+
+//         replace
+
+//         if ((!cache[index0].valid && !cache[index0].lock) &&
+//             (!cache[index1].valid && !cache[index1].lock))   /* both valid */
+//         {
+//             replace(cache, index0, index1, tag);
+//         }
+//         else if(!cache[index0].valid && !cache[index0].lock)
+//         {
+//             replace_idx(cache, index0, index1, tag);
+//         }
+//         else if(!cache[index0].valid && cache[index0].lock)
+//         {
+//             fprintf(stderr, "*** Error: Line %x in way 0 invalid and locked!\n",
+//                 index0);
+//             exit(1);
+//         }
+//         else if(!cache[index1].valid && !cache[index1].lock)
+//         {
+//             replace_idx(cache, index1, index0, tag);
+//         }
+//         else if(!cache[index1].valid && cache[index1].lock)
+//         {
+//             fprintf(stderr, "*** Error: Line %x in way 1 invalid and locked!\n",
+//                 index0);
+//             exit(1);
+//         }
+//         else if(cache[index0].lock && cache[index1].lock)
+//         {
+//             printf("Lines locked\n");
+//         }
+//         else if(cache[index0].lock)
+//         {
+//             replace_idx(cache, index1, index0, tag);
+//         }
+//         else if(cache[index1].lock)
+//         {
+//             replace_idx(cache, index0, index1, tag);
+//         }
+//         else {
+//             printf("%s\n", );
+//         }
+
+//         return 1;
+//     }
+// }
+
+// inline uint8_t 
+// lookup_cache_4w (cache_item_t *cache, uint32_t index,
+//               uint32_t tag, unsigned int *mask)
+// {
+//     if((cache[index].tag == tag && cache[index].valid == 1) ||
+//       (cache[index | mask[0]].tag == tag && cache[index | mask[0]].valid == 1) ||
+//       (cache[index | mask[1]].tag == tag && cache[index | mask[1]].valid == 1) ||
+//       (cache[index | mask[2]].tag == tag && cache[index | mask[2]].valid == 1))
+//         return 0;
+//     else {
+//         if(cache[index].lock == 0) {   
+//             cache[index].tag = tag;
+//             cache[index].valid = 1;
+//         }
+//         else {
+//             printf("Line Locked!!\n");
+//         }
+//         return 1;
+//     }
+// }
 
 /*****************************************************************************/
 // QEMU Helpers
@@ -234,7 +288,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     uint8_t miss_l2;
 
     uint8_t miss_l1 = (*env->cache->lookup_cache_i)(env->cache->icache,
-                        idx_l1, tag_l1, mips_cache_opts.i_way_mask);
+                        idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
+                        (1<<mips_cache_opts.i_way_width));  // TODO: shit shift
 
     if (!miss_l1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
@@ -246,7 +301,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
             idx_l2 = DECODE_INDEX_L2(pc_addr);
             tag_l2 = DECODE_TAG_L2(pc_addr);
             miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
-                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask);
+                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
+                        (1<<mips_cache_opts.l2_way_width));
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -275,7 +331,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint8_t miss_l2;
 
     uint8_t miss_l1 = (*env->cache->lookup_cache_d)(env->cache->dcache,
-                        idx_l1, tag_l1, mips_cache_opts.d_way_mask);
+                        idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
+                        (1<<mips_cache_opts.d_way_width));
     
     // TODO: dirty bit etc for write-back?
     
@@ -295,7 +352,8 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
             idx_l2 = DECODE_INDEX_L2(phys_address);
             tag_l2 = DECODE_TAG_L2(phys_address);
             miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
-                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask);
+                        idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
+                        (1<<mips_cache_opts.l2_way_width));
             if (!miss_l2)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else

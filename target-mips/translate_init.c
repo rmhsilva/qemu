@@ -651,10 +651,10 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
         env->cache->lookup_cache_##type = &lookup_cache_dm;                   \
     break;                                                                     \
     case 1:                                                                    \
-        env->cache->lookup_cache_##type = &lookup_cache_2w;                   \
+        env->cache->lookup_cache_##type = &replace_lru;                        \
     break;                                                                     \
     case 2:                                                                    \
-        env->cache->lookup_cache_##type = &lookup_cache_4w;                   \
+        env->cache->lookup_cache_##type = &replace_lru;                        \
     break;                                                                     \
 }
 
@@ -672,6 +672,7 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
         env->cache->icache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.i_no_of_lines);
         SWITCH_FUNCTION(i);
+        // TODO: add replacement algo choice to command lines
     }
 
     if (mips_cache_opts.use_d) {

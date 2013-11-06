@@ -68,9 +68,9 @@ struct CPUMIPSCacheContext {
     cache_item_t *dcache;
     cache_item_t *l2cache;
     struct MipsCacheOpts *opts;
-    uint8_t (*lookup_cache_i)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
-    uint8_t (*lookup_cache_d)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
-    uint8_t (*lookup_cache_l2)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
+    uint8_t (*lookup_cache_i)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+    uint8_t (*lookup_cache_d)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+    uint8_t (*lookup_cache_l2)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
 };
 /**GDP**/
 
@@ -508,9 +508,8 @@ struct CPUMIPSState {
 #include "cpu-qom.h"
 
 /** GDP **/
-uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
-uint8_t lookup_cache_2w(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
-uint8_t lookup_cache_4w(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask);
+uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+uint8_t replace_lru(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
 /** GDP **/
 
 #if !defined(CONFIG_USER_ONLY)
