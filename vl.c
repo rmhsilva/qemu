@@ -2984,9 +2984,10 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("dcache %s %u %u %u %c\n", mips_cache_opts.d_opt,
+                printf("dcache %s %u %u %u %d %d\n", mips_cache_opts.d_opt,
                       mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
-                      mips_cache_opts.d_index_width,mips_cache_opts.d_type); 
+                      mips_cache_opts.d_index_width,mips_cache_opts.d_way_width,
+                      mips_cache_opts.d_replacement); 
                 break;
 
             case QEMU_OPTION_icache:
@@ -2995,9 +2996,10 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("icache %s %u %u %u %c\n", mips_cache_opts.i_opt,
+                printf("icache %s %u %u %u %d %d\n", mips_cache_opts.i_opt,
                       mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
-                        mips_cache_opts.i_index_width,mips_cache_opts.i_type);    
+                        mips_cache_opts.i_index_width,mips_cache_opts.i_way_width,
+                        mips_cache_opts.i_replacement);    
                 break;
 
             case QEMU_OPTION_l2cache:
@@ -3006,9 +3008,10 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("icache %s %u %u %u %c\n", mips_cache_opts.l2_opt,
+                printf("icache %s %u %u %u %d %d\n", mips_cache_opts.l2_opt,
                       mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
-                      mips_cache_opts.l2_index_width,mips_cache_opts.l2_type); 
+                      mips_cache_opts.l2_index_width,mips_cache_opts.l2_way_width,
+                      mips_cache_opts.l2_replacement); 
                 break;
 
             case QEMU_OPTION_M:

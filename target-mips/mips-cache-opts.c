@@ -17,6 +17,13 @@
 /*     i - i-cache */
 /*     u - unified L2 cache */
 
+/* Cache replacement algorithms:
+ * 0 - no replacement algorithm -> direct mapped (8'b00000000)
+ * 2 - least recently used (8'b00000010)
+ * 4 - least frequently used (8'b00000100)
+ * 6 - random (8'b00000110)
+ */
+
 /*  GDP cache options struct MIPS  */
 struct MipsCacheOpts mips_cache_opts = {"","","",0};
 
@@ -27,7 +34,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     "*** Error: MIPS cache options are only supported in MIPS target\n");
     return 1;
 #else
-    unsigned char *type;
+    unsigned char *replacement;
     unsigned char *way_width;
     unsigned int **way_mask;
     unsigned int *no_of_lines;
@@ -36,15 +43,16 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     unsigned int *index_width;
     unsigned int *index_mask;
     unsigned int tmp0, tmp1, tmp3;
-    char tmp2[10];
+    char tmp2[5], tmp4[5];
+    int opt_len;
 
 
     /* D-cache */
     if(which_cache == 'd')
     {
-        pstrcpy(mips_cache_opts.d_opt,10,arg);
+        pstrcpy(mips_cache_opts.d_opt,15,arg);
         mips_cache_opts.use_d = 1; 
-        type = &mips_cache_opts.d_type;
+        replacement = &mips_cache_opts.d_replacement;
         way_width = &mips_cache_opts.d_way_width;
         way_mask = &mips_cache_opts.d_way_mask;
         no_of_lines = &mips_cache_opts.d_no_of_lines;
@@ -55,9 +63,9 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* I-cache */
     else if(which_cache == 'i')
     {
-        pstrcpy(mips_cache_opts.i_opt,10,arg);
+        pstrcpy(mips_cache_opts.i_opt,15,arg);
         mips_cache_opts.use_i = 1;
-        type = &mips_cache_opts.i_type;
+        replacement = &mips_cache_opts.i_replacement;
         way_width = &mips_cache_opts.i_way_width;
         way_mask = &mips_cache_opts.i_way_mask;
         no_of_lines = &mips_cache_opts.i_no_of_lines;
@@ -68,9 +76,9 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* L2-cache */
     else if(which_cache == 'u')
     {
-        pstrcpy(mips_cache_opts.l2_opt,12,arg);
+        pstrcpy(mips_cache_opts.l2_opt,15,arg);
         mips_cache_opts.use_l2 = 1; 
-        type = &mips_cache_opts.l2_type;
+        replacement = &mips_cache_opts.l2_replacement;
         way_width = &mips_cache_opts.l2_way_width;
         way_mask = &mips_cache_opts.l2_way_mask;
         no_of_lines = &mips_cache_opts.l2_no_of_lines;
@@ -86,7 +94,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     }
 
     /* Process option arguments */
-    if(sscanf(arg,"%ux%u_%9s", &tmp0, &tmp1, tmp2) != 3)
+    opt_len = sscanf(arg,"%ux%u_%2s_%3s", &tmp0, &tmp1, tmp2, tmp4);
+    if( opt_len != 4 && opt_len != 3)
     {
         fprintf(stderr,
             "*** Error: Cannot process arguments of %c-cache\n",which_cache);
@@ -186,17 +195,14 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 
     /* Check cache type */
     if(!strcmp(tmp2,"dm")) {
-        *type = 'd';
         *way_width = 0;
     }
     else if(!strcmp(tmp2,"2w")) {
-        *type = '2';
         *way_width = 1;
         *way_mask = (unsigned int *)g_malloc(sizeof(unsigned int));
         (*way_mask)[0] = 1 << (*index_width - 1);
     }
     else if(!strcmp(tmp2,"4w")) {
-        *type = '4';
         *way_width = 2;
         *way_mask = (unsigned int *)g_malloc(3*sizeof(unsigned int));
         (*way_mask)[0] = 1 << (*index_width - 2);
@@ -207,6 +213,32 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     {
         fprintf(stderr,
             "*** Error: Unrecognised type of %c-cache\n",which_cache);
+        return 1;       
+    }
+
+    /* Check replacement algorithm */
+    if(opt_len == 3) { /* No replacement passed */
+        if(!*way_width == 0) {/* not direct-mapped */
+            fprintf(stderr,
+                "*** Error: Specify replacement algorithm of %c-cache\n",which_cache);
+            return 1; 
+        }
+        else
+          *replacement = 0;
+    }
+    else if(!strcmp(tmp4,"lru")) {
+        *replacement = 2;
+    }
+    else if(!strcmp(tmp4,"lfu")) {
+        *replacement = 4;
+    }
+    else if(!strcmp(tmp4,"rnd")) {
+        *replacement = 6;
+    }
+    else
+    {
+        fprintf(stderr,
+            "*** Error: Unrecognised replacement algorithm of %c-cache\n",which_cache);
         return 1;       
     }
 
@@ -341,55 +373,35 @@ unsigned int gdp_log2(unsigned int n)
 
 /* ------------------------------------------------------------------------- */
 /* Allowed cache types and sizes for dcache and icache:  */
-/* 2kB: */
-/* 1x512_dm 2x256_dm 4x128_dm 8x64_dm */
-/* 1x512_2w 2x256_2w 4x128_2w 8x64_2w */
-/* 1x512_4w 2x256_4w 4x128_4w 8x64_4w */
 
-/* 4kB: */
-/* 1x1024_dm 2x512_dm 4x256_dm 8x128_dm */
-/* 1x1024_2w 2x512_2w 4x256_2w 8x128_2w */
-/* 1x1024_4w 2x512_4w 4x256_4w 8x128_4w */
+/*2kB:*/
+/*1x512_tp_rep 2x256_tp_rep 4x128_tp_rep 8x64_tp_rep*/
 
-/* 8kB: */
-/* 1x2048_dm 2x1024_dm 4x512_dm 8x256_dm */
-/* 1x2048_2w 2x1024_2w 4x512_2w 8x256_2w */
-/* 1x2048_4w 2x1024_4w 4x512_4w 8x256_4w */
+/*4kB:*/
+/*1x1024_tp_rep 2x512_tp_rep 4x256_tp_rep 8x128_tp_rep*/
 
-/* 16kB: */
-/* 1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm */
-/* 1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w */
-/* 1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w */
+/*8kB:*/
+/*1x2048_tp_rep 2x1024_tp_rep 4x512_tp_rep 8x256_tp_rep*/
 
-/* 32kB: */
-/* 1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm */
-/* 1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w */
-/* 1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w */
+/*16kB:*/
+/*1x4096_tp_rep 2x2048_tp_rep 4x1024_tp_rep 8x512_tp_rep*/
+
+/*32kB:*/
+/*1x8192_tp_rep 2x4096_tp_rep 4x2048_tp_rep 8x1024_tp_rep*/
 
 /* Allowed cache types and sizes for l2cache:  */
 
-/* 256kB: */
-/* 4x16384_dm 8x8192_dm 16x4096_dm 32x2048_dm */
-/* 4x16384_2w 8x8192_2w 16x4096_2w 32x2048_2w */
-/* 4x16384_4w 8x8192_4w 16x4096_4w 32x2048_4w */
+/*256kB:*/
+/*4x16384_tp_rep 8x8192_tp_rep 16x4096_tp_rep 32x2048_tp_rep*/
 
-/* 512kB: */
-/* 4x32768_dm 8x16384_dm 16x8192_dm 32x4096_dm */
-/* 4x32768_2w 8x16384_2w 16x8192_2w 32x4096_2w */
-/* 4x32768_4w 8x16384_4w 16x8192_4w 32x4096_4w */
+/*512kB:*/
+/*4x32768_tp_rep 8x16384_tp_rep 16x8192_tp_rep 32x4096_tp_rep*/
 
-/* 1MB: */
-/* 4x65536_dm 8x32768_dm 16x16384_dm 32x8192_dm */
-/* 4x65536_2w 8x32768_2w 16x16384_2w 32x8192_2w */
-/* 4x65536_4w 8x32768_4w 16x16384_4w 32x8192_4w */
+/*1MB:*/
+/*4x65536_tp_rep 8x32768_tp_rep 16x16384_tp_rep 32x8192_tp_rep*/
 
-/* 2MB: */
-/* 4x131072_dm 8x65536_dm 16x32768_dm 32x16384_dm */
-/* 4x131072_2w 8x65536_2w 16x32768_2w 32x16384_2w */
-/* 4x131072_4w 8x65536_4w 16x32768_4w 32x16384_4w */
-
-/* 4MB: */
-/* 4x262144_dm 8x131072_dm 16x65536_dm 32x32768_dm */
-/* 4x262144_2w 8x131072_2w 16x65536_2w 32x32768_2w */
-/* 4x262144_4w 8x131072_4w 16x65536_4w 32x32768_4w */
+/*2MB:*/
+/*4x131072_tp_rep 8x65536_tp_rep 16x32768_tp_rep 32x16384_tp_rep*/
+/*4MB:*/
+/*4x262144_tp_rep 8x131072_tp_rep 16x65536_tp_rep 32x32768_tp_rep*/
 

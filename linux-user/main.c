@@ -3302,39 +3302,39 @@ void init_task_state(TaskState *ts)
 /* GDP option handlers */
 static void handle_arg_dcache(const char *arg)
 {
-    pstrcpy(mips_cache_opts.d_opt,10,arg);
     if(proc_mips_cache_opt('d',arg))
     {
         /* Error in processing option argument */
         exit(1);
     }
-    printf("dcache %s %u %u %u %c\n", mips_cache_opts.d_opt,
+    printf("dcache %s %u %u %u %d %d\n", mips_cache_opts.d_opt,
           mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
-          mips_cache_opts.d_index_width,mips_cache_opts.d_type);
+          mips_cache_opts.d_index_width,mips_cache_opts.d_way_width,
+          mips_cache_opts.d_replacement);
 }
 static void handle_arg_icache(const char *arg)
 {
-    pstrcpy(mips_cache_opts.i_opt,10,arg);
     if(proc_mips_cache_opt('i',arg))
     {
         /* Error in processing option argument */
         exit(1);
     }
-    printf("icache %s %u %u %u %c\n", mips_cache_opts.i_opt,
+    printf("icache %s %u %u %u %d %d\n", mips_cache_opts.i_opt,
           mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
-            mips_cache_opts.i_index_width,mips_cache_opts.i_type);
+            mips_cache_opts.i_index_width,mips_cache_opts.i_way_width,
+            mips_cache_opts.i_replacement);
 }
 static void handle_arg_l2cache(const char *arg)
 {
-    pstrcpy(mips_cache_opts.l2_opt,12,arg);
     if(proc_mips_cache_opt('u',arg))
     {
         /* Error in processing option argument */
         exit(1);
     }
-    printf("icache %s %u %u %u %c\n", mips_cache_opts.l2_opt,
+    printf("icache %s %u %u %u %d %d\n", mips_cache_opts.l2_opt,
           mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
-          mips_cache_opts.l2_index_width,mips_cache_opts.l2_type);
+          mips_cache_opts.l2_index_width,mips_cache_opts.l2_way_width,
+          mips_cache_opts.l2_replacement);
 }
 /* GDP option handlers end */
 #endif
@@ -3554,11 +3554,11 @@ static const struct qemu_argument arg_table[] = {
 #ifdef TARGET_MIPS
 /* GDP cache options */
     {"dcache",    "QEMU_CACHE_D",     true, handle_arg_dcache,
-     "nxm_tp",           "choose d-cache size and type"},
+     "nxm_tp_rep",           "choose d-cache size, type and repl. algorithm"},
     {"icache",    "QEMU_CACHE_I",     true, handle_arg_icache,
-     "nxm_tp",           "choose i-cache size and type"},
+     "nxm_tp_rep",           "choose i-cache size, type and repl. algorithm"},
     {"l2cache",    "QEMU_CACHE_L2",     true, handle_arg_l2cache,
-     "nxm_tp",           "choose L2 cache size and type"},
+     "nxm_tp_rep",           "choose L2 cache size, type and repl. algorithm"},
 #endif
     {NULL, NULL, false, NULL, NULL, NULL}
 };

@@ -3129,160 +3129,153 @@ ETEXI
 HXCOMM GDP MIPS definitions start
 
 DEF("dcache", HAS_ARG, QEMU_OPTION_dcache,
-    "-dcache nxm_tp     specify data cache size e.g.:\n"
+    "-dcache nxm_tp_rep     specify data cache size e.g.:\n"
     "                   -dcache 1x128_dm where n - no. of words in a cache line\n"
-    "                   m - no. of lines, tp - cache type)\n",
+    "                   m - no. of lines, tp - cache type, rep - replacement alg.)\n",
     QEMU_ARCH_MIPS)
 STEXI
-@item -dcache @var{nxm_tp}
+@item -dcache @var{nxm_tp_rep}
 @findex -dcache
-Specify cache size @var{nxm_tp} (for example @code{1x128_dm} for
-a direct-mapped cache with 1 word in a cache line and 128 lines). nxm_tp means:
-n - number of words in a cache line, m - number of cache lines, tp - cache type.
+Specify cache size @var{nxm_tp_rep} (for example @code{1x128_dm_lru} for
+a direct-mapped cache with 1 word in a cache line, 128 lines and least recently
+used algorithm). nxm_tp_rep means:
+n - number of words in a cache line, m - number of cache lines, tp - cache type,
+rep - relacement algorithm.
 If you do not use this option, cache will not be used.
 
 The available options are:
 
 2kB:
 @example
-1x512_dm 2x256_dm 4x128_dm 8x64_dm
-1x512_2w 2x256_2w 4x128_2w 8x64_2w
-1x512_4w 2x256_4w 4x128_4w 8x64_4w
+1x512_tp_rep 2x256_tp_rep 4x128_tp_rep 8x64_tp_rep
+
 @end example
 4kB:
 @example
-1x1024_dm 2x512_dm 4x256_dm 8x128_dm
-1x1024_2w 2x512_2w 4x256_2w 8x128_2w
-1x1024_4w 2x512_4w 4x256_4w 8x128_4w
+1x1024_tp_rep 2x512_tp_rep 4x256_tp_rep 8x128_tp_rep
 @end example
 8kB:
 @example
-1x2048_dm 2x1024_dm 4x512_dm 8x256_dm
-1x2048_2w 2x1024_2w 4x512_2w 8x256_2w
-1x2048_4w 2x1024_4w 4x512_4w 8x256_4w
+1x2048_tp_rep 2x1024_tp_rep 4x512_tp_rep 8x256_tp_rep
 @end example
 16kB:
 @example
-1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm
-1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w
-1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w
+1x4096_tp_rep 2x2048_tp_rep 4x1024_tp_rep 8x512_tp_rep
 @end example
 32kB:
 @example
-1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm
-1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w
-1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w
+1x8192_tp_rep 2x4096_tp_rep 4x2048_tp_rep 8x1024_tp_rep
 @end example
 where
-dm - direct mapped cache,
-2w - two-way associative cache,
-4w - four-way associative cache
+tp_rep:
+tp - type:
+  dm - direct mapped cache,
+  2w - two-way associative cache,
+  4w - four-way associative cache
+rep - replacement algorithm:
+  lru - least recently used
+  lfu - least frequently used
+  ran - random
 ETEXI
 
 
 DEF("icache", HAS_ARG, QEMU_OPTION_icache,
     "-icache nxm_tp     specify instruction cache size e.g.:\n"
     "                   -icache 1x128_dm where n - no. of words in a cache line\n"
-    "                   m - no. of lines, tp - cache type)\n",
+    "                   m - no. of lines, tp - cache type, rep - replacement alg.)\n",
     QEMU_ARCH_MIPS)
 STEXI
 @item -icache @var{nxm_tp}
 @findex -icache
-Specify cache size @var{nxm_tp} (for example @code{1x128_dm} for
-a direct-mapped cache with 1 word in a cache line and 128 lines). nxm_tp means:
-n - number of words in a cache line, m - number of cache lines, tp - cache type.
+Specify cache size @var{nxm_tp_rep} (for example @code{1x128_dm_lru} for
+a direct-mapped cache with 1 word in a cache line, 128 lines and least recently
+used algorithm). nxm_tp_rep means:
+n - number of words in a cache line, m - number of cache lines, tp - cache type,
+rep - relacement algorithm.
 If you do not use this option, cache will not be used.
 
 The available options are:
 
 2kB:
 @example
-1x512_dm 2x256_dm 4x128_dm 8x64_dm
-1x512_2w 2x256_2w 4x128_2w 8x64_2w
-1x512_4w 2x256_4w 4x128_4w 8x64_4w
+1x512_tp_rep 2x256_tp_rep 4x128_tp_rep 8x64_tp_rep
+
 @end example
 4kB:
 @example
-1x1024_dm 2x512_dm 4x256_dm 8x128_dm
-1x1024_2w 2x512_2w 4x256_2w 8x128_2w
-1x1024_4w 2x512_4w 4x256_4w 8x128_4w
+1x1024_tp_rep 2x512_tp_rep 4x256_tp_rep 8x128_tp_rep
 @end example
 8kB:
 @example
-1x2048_dm 2x1024_dm 4x512_dm 8x256_dm
-1x2048_2w 2x1024_2w 4x512_2w 8x256_2w
-1x2048_4w 2x1024_4w 4x512_4w 8x256_4w
+1x2048_tp_rep 2x1024_tp_rep 4x512_tp_rep 8x256_tp_rep
 @end example
 16kB:
 @example
-1x4096_dm 2x2048_dm 4x1024_dm 8x512_dm
-1x4096_2w 2x2048_2w 4x1024_2w 8x512_2w
-1x4096_4w 2x2048_4w 4x1024_4w 8x512_4w
+1x4096_tp_rep 2x2048_tp_rep 4x1024_tp_rep 8x512_tp_rep
 @end example
 32kB:
 @example
-1x8192_dm 2x4096_dm 4x2048_dm 8x1024_dm
-1x8192_2w 2x4096_2w 4x2048_2w 8x1024_2w
-1x8192_4w 2x4096_4w 4x2048_4w 8x1024_4w
+1x8192_tp_rep 2x4096_tp_rep 4x2048_tp_rep 8x1024_tp_rep
 @end example
 where
-dm - direct mapped cache,
-2w - two-way associative cache,
-4w - four-way associative cache
+tp_rep:
+tp - type:
+  dm - direct mapped cache,
+  2w - two-way associative cache,
+  4w - four-way associative cache
+rep - replacement algorithm:
+  lru - least recently used
+  lfu - least frequently used
+  ran - random
 ETEXI
 
-HXCOMM GDP MIPS definitions end
-
-
 DEF("l2cache", HAS_ARG, QEMU_OPTION_l2cache,
-    "-l2cache nxm_tp     specify L2 cache size e.g.:\n"
-    "                   -l2cache 4x16384_dm where n - no. of words in a cache line\n"
-    "                   m - no. of lines, tp - cache type)\n",
+    "-l2cache nxm_tp_rep     specify L2 cache size e.g.:\n"
+    "                   -l2cache 4x16384_dm_rep where n - no. of words in a cache line\n"
+    "                   m - no. of lines, tp - cache type, rep - replacement algorithm)\n",
     QEMU_ARCH_MIPS)
 STEXI
-@item -l2cache @var{nxm_tp}
+@item -l2cache @var{nxm_tp_rep}
 @findex -l2cache
-Specify cache size @var{nxm_tp} (for example @code{4x16384_dm} for
-a direct-mapped cache with 4 words in a cache line and 16384 lines). nxm_tp means:
-n - number of words in a cache line, m - number of cache lines, tp - cache type.
+Specify cache size @var{nxm_tp_rep} (for example @code{4x16384_dm_lru} for
+a direct-mapped cache with 4 words in a cache line, 16384 lines and LRU replacement
+algorithm). nxm_tp_rep means:
+n - number of words in a cache line, m - number of cache lines, tp - cache type,
+rep - replacement algorithm.
 If you do not use this option, cache will not be used.
 
 The available options are:
 
 256kB:
 @example
-4x16384_dm 8x8192_dm 16x4096_dm 32x2048_dm
-4x16384_2w 8x8192_2w 16x4096_2w 32x2048_2w
-4x16384_4w 8x8192_4w 16x4096_4w 32x2048_4w
+4x16384_tp_rep 8x8192_tp_rep 16x4096_tp_rep 32x2048_tp_rep
 @end example
 512kB:
 @example
-4x32768_dm 8x16384_dm 16x8192_dm 32x4096_dm
-4x32768_2w 8x16384_2w 16x8192_2w 32x4096_2w
-4x32768_4w 8x16384_4w 16x8192_4w 32x4096_4w
+4x32768_tp_rep 8x16384_tp_rep 16x8192_tp_rep 32x4096_tp_rep
 @end example
 1MB:
 @example
-4x65536_dm 8x32768_dm 16x16384_dm 32x8192_dm
-4x65536_2w 8x32768_2w 16x16384_2w 32x8192_2w
-4x65536_4w 8x32768_4w 16x16384_4w 32x8192_4w
+4x65536_tp_rep 8x32768_tp_rep 16x16384_tp_rep 32x8192_tp_rep
 @end example
 2MB:
 @example
-4x131072_dm 8x65536_dm 16x32768_dm 32x16384_dm
-4x131072_2w 8x65536_2w 16x32768_2w 32x16384_2w
-4x131072_4w 8x65536_4w 16x32768_4w 32x16384_4w
+4x131072_tp_rep 8x65536_tp_rep 16x32768_tp_rep 32x16384_tp_rep
 @end example
 4MB:
 @example
-4x262144_dm 8x131072_dm 16x65536_dm 32x32768_dm
-4x262144_2w 8x131072_2w 16x65536_2w 32x32768_2w
-4x262144_4w 8x131072_4w 16x65536_4w 32x32768_4w
+4x262144_tp_rep 8x131072_tp_rep 16x65536_tp_rep 32x32768_tp_rep
 @end example
 where
-dm - direct mapped cache,
-2w - two-way associative cache,
-4w - four-way associative cache
+tp_rep:
+tp - type:
+  dm - direct mapped cache,
+  2w - two-way associative cache,
+  4w - four-way associative cache
+rep - replacement algorithm:
+  lru - least recently used
+  lfu - least frequently used
+  ran - random
 ETEXI
 
 HXCOMM GDP MIPS definitions end
