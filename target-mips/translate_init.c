@@ -646,9 +646,9 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 
 /**GDP**/
-#define SWITCH_FUNCTION(type) switch(mips_cache_opts.type##_way_width) {     \
+#define SWITCH_FUNCTION(type) switch(mips_cache_opts.type##_way_width) {       \
     case 0:                                                                    \
-        env->cache->lookup_cache_##type = &lookup_cache_dm;                   \
+        env->cache->lookup_cache_##type = &lookup_cache_dm;                    \
     break;                                                                     \
     case 1:                                                                    \
         env->cache->lookup_cache_##type = &replace_lru;                        \

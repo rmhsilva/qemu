@@ -7,12 +7,16 @@ DEF_HELPER_2(raise_exception, noreturn, env, i32)
 DEF_HELPER_2(dcache_ld, void, env, tl)
 DEF_HELPER_2(dcache_st, void, env, tl)
 DEF_HELPER_3(icache, void, env, tl, i32)
-DEF_HELPER_2(cache_invalidate_i, void, env, i32)
-DEF_HELPER_2(cache_load_tag_i, void, env, i32)
-DEF_HELPER_2(cache_store_tag_i, void, env, i32)
-DEF_HELPER_2(cache_hit_invalidate_i, void, env, i32)
-DEF_HELPER_2(cache_fill_i, void, env, i32)
-DEF_HELPER_2(cache_fetch_lock_i, void, env, i32)
+#define CACHE_OPS(type) \
+DEF_HELPER_2(cache_invalidate_ ## type, void, env, i32)     \
+DEF_HELPER_2(cache_load_tag_ ## type, void, env, i32)       \
+DEF_HELPER_2(cache_store_tag_ ## type, void, env, i32)      \
+DEF_HELPER_2(cache_hit_invalidate_ ## type, void, env, i32) \
+DEF_HELPER_2(cache_fill_ ## type, void, env, i32)           \
+DEF_HELPER_2(cache_fetch_lock_ ## type, void, env, i32)
+CACHE_OPS(i)
+CACHE_OPS(d)
+CACHE_OPS(l2)
 /**GDP**/
 
 #ifdef TARGET_MIPS64
