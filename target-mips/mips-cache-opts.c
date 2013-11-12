@@ -1,4 +1,4 @@
-/* GDP  */
+/* GDP */
 /* File includes functions calculating offset and index widths */
 /* See allowed cache types and sizes at the end of this file */
 
