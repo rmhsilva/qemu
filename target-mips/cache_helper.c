@@ -19,195 +19,27 @@
 #include <stdlib.h>
 #include "cpu.h"
 #include "helper.h"
+#include "cache.h"
+#include "mips-cache-opts.h"
 
 /* Macros for displaying uint64t */
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-
 /*****************************************************************************/
-/* GDP */
-
-// I-cache utility functions:
-
-/**
- * invalidate: mark a cache line as invalid and remove lock
- */
-static inline void
-invalidate (cache_item_t *cache, uint32_t index)
-{
-    cache[index].valid = 0;
-    cache[index].lock = 0;
-}
-
-/**
- * fill_line: fill a specified cache line (mark it as valid etc)
- * @return       0: success, 1: error
- */
-static inline uint8_t
-fill_line (cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    if (cache[index].lock == 0) {
-        cache[index].tag = tag;
-        cache[index].valid = 1;
-        return 0;
-    }
-    else {
-        printf("Line Locked: %x\n", index);
-        return 1;
-    }
-}
-
-/**
- * hit_invalidate: mark a line as invalid IF it is currently valid
- */
-static inline void
-hit_invalidate (cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    unsigned int current_tag = cache[index].tag;
-
-    if((current_tag==tag) && (cache[index].valid==1)) {
-        invalidate(cache, index);
-    }
-}
-
-/**
- * fetch_lock: fill a cache line AND mark it as locked
- */
-static inline void
-fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    fill_line(cache, index, tag);
-    cache[index].lock = 1;
-}
-
-/**
- * lookup_cache: Lookup data in a cache (L1/L2)
- * @param  *cache     Pointer to the cache memory
- * @param  index      Cache line to use
- * @param  tag        Tag of required memory
- * @param  way_width  0: direct-mapped, 1: 2-way set-associative, 2: 4-way s.-a.
- * @return            0: hit, 1: miss
- */
-inline uint8_t 
-lookup_cache_dm (cache_item_t *cache, uint32_t index,
-              uint32_t tag, unsigned int *mask, uint8_t n_indexes)
-{
-    if(cache[index].tag == tag && cache[index].valid == 1)
-        return 0;
-    else {
-        if(cache[index].lock == 0) {   
-            cache[index].tag = tag;
-            cache[index].valid = 1;
-        }
-        else {
-            printf("Line Locked!!\n");
-        }
-        return 1;
-    }
-}
-
-
-static void
-lru_update(cache_item_t **cache_lines, uint32_t item_to_update, uint8_t n_indexes)
-{
-    int i;
-    uint32_t old_rfield = cache_lines[item_to_update]->r_field;
-    if(old_rfield == n_indexes - 1)
-        return;
-    for(i = 0; i < n_indexes; i = i + 1)
-    {
-        if(cache_lines[i]->r_field > old_rfield)
-            cache_lines[i]->r_field--;
-    }
-    cache_lines[item_to_update]->r_field = n_indexes - 1;
-}
-
-
-uint8_t replace_lru(cache_item_t *cache, uint32_t index, uint32_t tag,
-                    unsigned int *mask, uint8_t n_indexes)
-{
-    uint32_t i, unlocked_cnt=0, min_r_field=(n_indexes-1), lru_idx=0;
-
-    // cache lines array
-    cache_item_t *lines[n_indexes];
-    for (i=0; i<n_indexes; i++)
-        lines[i] = &cache[index | mask[i]];
-
-    // Loop over all cache line indexes
-    for (i=0; i<n_indexes; i++) {
-        if (lines[i]->valid == 1) {  /* Line valid... */
-            if (lines[i]->tag == tag) {  /* ... and correct tag */
-                lru_update(lines, i, n_indexes);
-                return 0;
-            }
-            else if (!lines[i]->lock) {  /* ... and wrong tag and unlocked */
-                unlocked_cnt++;
-                if (lines[i]->r_field < min_r_field) { // Check if less used
-                    min_r_field = lines[i]->r_field;
-                    lru_idx = i;
-                }
-            }
-        }
-        else {  /* line invalid... */
-            if (lines[i]->lock) {    /* ...and locked */
-                fprintf(stderr, "*** Error: Line %x in way 0 invalid and locked!\n",
-                    index | mask[i]);
-                exit(1);
-            }  /* ...and unlocked */
-            lines[i]->tag = tag;
-            lines[i]->valid = 1;
-            lru_update(lines, i, n_indexes);
-            return 1;
-        }
-    }
-
-    if (unlocked_cnt == 0) {  /* All lines valid and locked */
-        printf("All cache lines locked for index %x\n", index);
-    }
-    else {  /* All lines are valid and some are unlocked */
-        lines[lru_idx]->tag = tag;
-        lines[lru_idx]->valid = 1;
-        lru_update(lines, lru_idx, n_indexes);
-    }
-    return 1;
-}
-
-
-/*****************************************************************************/
-// QEMU Helpers
-
-#define DECODE_INDEX(addr,mask,offset) (((addr) >> (offset)) & (mask))
-#define DECODE_TAG(addr,idx_width) ((addr) >> (idx_width))
-
-#define DECODE_INDEX_L1D(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.d_index_mask >> mips_cache_opts.d_way_width, \
-    mips_cache_opts.d_offset_width)
-#define DECODE_INDEX_L1I(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.i_index_mask >> mips_cache_opts.i_way_width, \
-    mips_cache_opts.i_offset_width)
-#define DECODE_INDEX_L2(addr) \
-    DECODE_INDEX(addr, mips_cache_opts.l2_index_mask >> mips_cache_opts.l2_way_width, \
-    mips_cache_opts.l2_offset_width)
-#define DECODE_TAG_L1D(addr) \
-    DECODE_TAG(addr, mips_cache_opts.d_index_width+mips_cache_opts.d_offset_width)
-#define DECODE_TAG_L1I(addr) \
-    DECODE_TAG(addr, mips_cache_opts.i_index_width+mips_cache_opts.i_offset_width)
-#define DECODE_TAG_L2(addr) \
-    DECODE_TAG(addr, mips_cache_opts.l2_index_width+mips_cache_opts.l2_offset_width)
-
+// Main Helpers
 
 /**
  * Main I-Cache helper function:
  */
 void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 {
-    uint32_t idx_l1 = DECODE_INDEX_L1I(pc_addr);
-    uint32_t tag_l1 = DECODE_TAG_L1I(pc_addr);
+    uint32_t idx_l1 = DECODE_INDEX_i(pc_addr);
+    uint32_t tag_l1 = DECODE_TAG_i(pc_addr);
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    uint8_t miss_l1 = (*env->cache->lookup_cache_i)(env->cache->icache,
+    uint8_t miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
                         (1<<mips_cache_opts.i_way_width));  // TODO: shit shift
 
@@ -218,9 +50,9 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
         mips_cache_opts.i_miss_cnt[idx_l1]++;
 
         if(mips_cache_opts.use_l2) {
-            idx_l2 = DECODE_INDEX_L2(pc_addr);
-            tag_l2 = DECODE_TAG_L2(pc_addr);
-            miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
+            idx_l2 = DECODE_INDEX_l2(pc_addr);
+            tag_l2 = DECODE_TAG_l2(pc_addr);
+            miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         (1<<mips_cache_opts.l2_way_width));
             if (!miss_l2)
@@ -245,12 +77,12 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     hwaddr phys_address = (hwaddr)addr;
 #endif
 
-    uint32_t idx_l1 = DECODE_INDEX_L1D(phys_address);
-    uint32_t tag_l1 = DECODE_TAG_L1D(phys_address);
+    uint32_t idx_l1 = DECODE_INDEX_d(phys_address);
+    uint32_t tag_l1 = DECODE_TAG_d(phys_address);
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    uint8_t miss_l1 = (*env->cache->lookup_cache_d)(env->cache->dcache,
+    uint8_t miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
                         (1<<mips_cache_opts.d_way_width));
     
@@ -269,9 +101,9 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
         else
             mips_cache_opts.d_st_miss_cnt[idx_l1]++;
         if(mips_cache_opts.use_l2) {
-            idx_l2 = DECODE_INDEX_L2(phys_address);
-            tag_l2 = DECODE_TAG_L2(phys_address);
-            miss_l2 = (*env->cache->lookup_cache_l2)(env->cache->l2cache,
+            idx_l2 = DECODE_INDEX_l2(phys_address);
+            tag_l2 = DECODE_TAG_l2(phys_address);
+            miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         (1<<mips_cache_opts.l2_way_width));
             if (!miss_l2)
@@ -290,102 +122,169 @@ void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
 }
 
 
-// TODO Must add d-cache helpers like the i-cache helpers below
+/*****************************************************************************/
+// Cache Operation helpers:
 
-void helper_cache_invalidate_i(CPUMIPSState *env, unsigned int addr)
-{
-    invalidate(env->cache->icache, DECODE_INDEX_L1I(addr));
+
+#define HELPER_INVALIDATE(type) \
+void helper_cache_invalidate_ ## type (CPUMIPSState *env, unsigned int addr)  \
+{                                                                             \
+    (*env->cache->type##cache_api->invalidate)(env->cache->type##cache,       \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));                                        \
 }
+HELPER_INVALIDATE(i)
+HELPER_INVALIDATE(d)
+HELPER_INVALIDATE(l2)
+#undef HELPER_INVALIDATE
 
-void helper_cache_load_tag_i(CPUMIPSState *env, unsigned int addr)
-{
-    // TODO - what about TagHi?
-    env->CP0_TagLo = env->cache->icache[DECODE_INDEX_L1I(addr)].tag;
+#define HELPER_LOAD_TAG(type) \
+void helper_cache_load_tag_ ## type (CPUMIPSState *env, unsigned int addr)    \
+{                                                                             \
+    env->CP0_TagLo = env->cache->type##cache[DECODE_INDEX_ ## type (addr)].tag;\
 }
+HELPER_LOAD_TAG(i)
+HELPER_LOAD_TAG(d)
+HELPER_LOAD_TAG(l2)
+#undef HELPER_LOAD_TAG
 
-void helper_cache_store_tag_i(CPUMIPSState *env, unsigned int addr)
-{
-    env->cache->icache[DECODE_INDEX_L1I(addr)].tag = env->CP0_TagLo;
+#define HELPER_STORE_TAG(type) \
+void helper_cache_store_tag_ ## type (CPUMIPSState *env, unsigned int addr)   \
+{                                                                             \
+    env->cache->type##cache[DECODE_INDEX_ ## type (addr)].tag = env->CP0_TagLo;\
 }
+HELPER_STORE_TAG(i)
+HELPER_STORE_TAG(d)
+HELPER_STORE_TAG(l2)
+#undef HELPER_STORE_TAG
 
-void helper_cache_hit_invalidate_i(CPUMIPSState *env, unsigned int addr)
-{
-    hit_invalidate(env->cache->icache, DECODE_INDEX_L1I(addr), DECODE_TAG_L1I(addr));
+#define HELPER_HIT_INVALIDATE(type) \
+void helper_cache_hit_invalidate_ ## type(CPUMIPSState *env, unsigned int addr)\
+{                                                                              \
+    (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));             \
 }
+HELPER_HIT_INVALIDATE(i)
+HELPER_HIT_INVALIDATE(d)
+HELPER_HIT_INVALIDATE(l2)
+#undef HELPER_HIT_INVALIDATE
 
-void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr)
-{
-    fill_line(env->cache->icache, DECODE_INDEX_L1I(addr), DECODE_TAG_L1I(addr));
+#define HELPER_FILL_LINE(type) \
+void helper_cache_fill_ ## type(CPUMIPSState *env, unsigned int addr)         \
+{                                                                             \
+    (*env->cache->type##cache_api->fill_line)(env->cache->type##cache,        \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
 }
+HELPER_FILL_LINE(i)
+HELPER_FILL_LINE(d)
+HELPER_FILL_LINE(l2)
+#undef HELPER_FILL_LINE
 
-void helper_cache_fetch_lock_i(CPUMIPSState *env, unsigned int addr)
-{
-    fetch_lock(env->cache->icache, DECODE_INDEX_L1I(addr), DECODE_TAG_L1I(addr));
+#define HELPER_FETCH_LOCK(type) \
+void helper_cache_fetch_lock_ ## type(CPUMIPSState *env, unsigned int addr)   \
+{                                                                             \
+    (*env->cache->type##cache_api->fetch_lock)(env->cache->type##cache,       \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
 }
+HELPER_FETCH_LOCK(i)
+HELPER_FETCH_LOCK(d)
+HELPER_FETCH_LOCK(l2)
+#undef HELPER_FETCH_LOCK
+
+
+// void helper_cache_invalidate_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     (*env->cache->icache_api->invalidate)(env->cache->icache, 
+//         DECODE_INDEX_i(addr));
+// }
+
+// void helper_cache_load_tag_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     // TODO - what about TagHi?
+//     env->CP0_TagLo = env->cache->icache[DECODE_INDEX_i(addr)].tag;
+// }
+
+// void helper_cache_store_tag_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     env->cache->icache[DECODE_INDEX_i(addr)].tag = env->CP0_TagLo;
+// }
+
+// void helper_cache_hit_invalidate_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     hit_invalidate(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
+// }
+
+// void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     fill_line(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
+// }
+
+// void helper_cache_fetch_lock_i(CPUMIPSState *env, unsigned int addr)
+// {
+//     fetch_lock(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
+// }
 
 
 
+// void helper_cache_invalidate_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     invalidate(env->cache->dcache, DECODE_INDEX_d(addr));
+// }
 
-void helper_cache_invalidate_d(CPUMIPSState *env, unsigned int addr)
-{
-    invalidate(env->cache->dcache, DECODE_INDEX_L1D(addr));
-}
+// void helper_cache_load_tag_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     // TODO - what about TagHi?
+//     env->CP0_TagLo = env->cache->dcache[DECODE_INDEX_d(addr)].tag;
+// }
 
-void helper_cache_load_tag_d(CPUMIPSState *env, unsigned int addr)
-{
-    // TODO - what about TagHi?
-    env->CP0_TagLo = env->cache->dcache[DECODE_INDEX_L1D(addr)].tag;
-}
+// void helper_cache_store_tag_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     env->cache->dcache[DECODE_INDEX_d(addr)].tag = env->CP0_TagLo;
+// }
 
-void helper_cache_store_tag_d(CPUMIPSState *env, unsigned int addr)
-{
-    env->cache->dcache[DECODE_INDEX_L1D(addr)].tag = env->CP0_TagLo;
-}
+// void helper_cache_hit_invalidate_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     hit_invalidate(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
+// }
 
-void helper_cache_hit_invalidate_d(CPUMIPSState *env, unsigned int addr)
-{
-    hit_invalidate(env->cache->dcache, DECODE_INDEX_L1D(addr), DECODE_TAG_L1D(addr));
-}
+// void helper_cache_fill_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     fill_line(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
+// }
 
-void helper_cache_fill_d(CPUMIPSState *env, unsigned int addr)
-{
-    fill_line(env->cache->dcache, DECODE_INDEX_L1D(addr), DECODE_TAG_L1D(addr));
-}
-
-void helper_cache_fetch_lock_d(CPUMIPSState *env, unsigned int addr)
-{
-    fetch_lock(env->cache->dcache, DECODE_INDEX_L1D(addr), DECODE_TAG_L1D(addr));
-}
-
+// void helper_cache_fetch_lock_d(CPUMIPSState *env, unsigned int addr)
+// {
+//     fetch_lock(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
+// }
 
 
-void helper_cache_invalidate_l2(CPUMIPSState *env, unsigned int addr)
-{
-    invalidate(env->cache->l2cache, DECODE_INDEX_L2(addr));
-}
 
-void helper_cache_load_tag_l2(CPUMIPSState *env, unsigned int addr)
-{
-    // TODO - what about TagHi?
-    env->CP0_TagLo = env->cache->l2cache[DECODE_INDEX_L2(addr)].tag;
-}
+// void helper_cache_invalidate_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     invalidate(env->cache->l2cache, DECODE_INDEX_l2(addr));
+// }
 
-void helper_cache_store_tag_l2(CPUMIPSState *env, unsigned int addr)
-{
-    env->cache->l2cache[DECODE_INDEX_L2(addr)].tag = env->CP0_TagLo;
-}
+// void helper_cache_load_tag_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     // TODO - what about TagHi?
+//     env->CP0_TagLo = env->cache->l2cache[DECODE_INDEX_l2(addr)].tag;
+// }
 
-void helper_cache_hit_invalidate_l2(CPUMIPSState *env, unsigned int addr)
-{
-    hit_invalidate(env->cache->l2cache, DECODE_INDEX_L2(addr), DECODE_TAG_L2(addr));
-}
+// void helper_cache_store_tag_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     env->cache->l2cache[DECODE_INDEX_l2(addr)].tag = env->CP0_TagLo;
+// }
 
-void helper_cache_fill_l2(CPUMIPSState *env, unsigned int addr)
-{
-    fill_line(env->cache->l2cache, DECODE_INDEX_L2(addr), DECODE_TAG_L2(addr));
-}
+// void helper_cache_hit_invalidate_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     hit_invalidate(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
+// }
 
-void helper_cache_fetch_lock_l2(CPUMIPSState *env, unsigned int addr)
-{
-    fetch_lock(env->cache->l2cache, DECODE_INDEX_L2(addr), DECODE_TAG_L2(addr));
-}
+// void helper_cache_fill_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     fill_line(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
+// }
+
+// void helper_cache_fetch_lock_l2(CPUMIPSState *env, unsigned int addr)
+// {
+//     fetch_lock(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
+// }

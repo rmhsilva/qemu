@@ -646,16 +646,19 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 
 /**GDP**/
-#define SWITCH_FUNCTION(type) switch(mips_cache_opts.type##_way_width) {       \
-    case 0:                                                                    \
-        env->cache->lookup_cache_##type = &lookup_cache_dm;                    \
-    break;                                                                     \
-    case 1:                                                                    \
-        env->cache->lookup_cache_##type = &replace_lru;                        \
-    break;                                                                     \
-    case 2:                                                                    \
-        env->cache->lookup_cache_##type = &replace_lru;                        \
-    break;                                                                     \
+#define SWITCH_FUNCTION(type) switch(mips_cache_opts.type##_replacement) { \
+    case 0:                                                                \
+        env->cache->type##cache_api = &interface_dm;                       \
+    break;                                                                 \
+    case 2:                                                                \
+        env->cache->type##cache_api = &interface_lru;                      \
+    break;                                                                 \
+    case 4:                                                                \
+        env->cache->type##cache_api = &interface_lfu;                      \
+    break;                                                                 \
+    case 6:                                                                \
+        env->cache->type##cache_api = &interface_rnd;                      \
+    break;                                                                 \
 }
 
 
@@ -665,7 +668,7 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
       printf("Initialising cache... ");
     
     // allocate the cache context memory...
-    env->cache = (CPUMIPSCacheContext *)g_malloc0(sizeof(CPUMIPSCacheContext));
+    env->cache = (CPUCacheContext *)g_malloc0(sizeof(CPUCacheContext));
     env->cache->opts = &mips_cache_opts;
 
     if (mips_cache_opts.use_i) {

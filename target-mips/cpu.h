@@ -17,6 +17,7 @@
 
 /**GDP**/
 #include "mips-cache-opts.h"
+#include "cache.h"
 
 struct CPUMIPSState;
 
@@ -52,27 +53,6 @@ struct CPUMIPSTLBContext {
     } mmu;
 };
 #endif
-
-/**GDP**/
-typedef struct cache_item_t cache_item_t;
-struct cache_item_t {
-    uint_fast32_t tag         : 30;
-    uint_fast8_t valid        : 1;
-    uint_fast8_t lock         : 1;
-    uint_fast32_t r_field     : 32;
-};
-
-typedef struct CPUMIPSCacheContext CPUMIPSCacheContext;
-struct CPUMIPSCacheContext {
-    cache_item_t *icache;
-    cache_item_t *dcache;
-    cache_item_t *l2cache;
-    struct MipsCacheOpts *opts;
-    uint8_t (*lookup_cache_i)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-    uint8_t (*lookup_cache_d)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-    uint8_t (*lookup_cache_l2)(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-};
-/**GDP**/
 
 typedef union fpr_t fpr_t;
 union fpr_t {
@@ -498,7 +478,7 @@ struct CPUMIPSState {
     CPUMIPSTLBContext *tlb;
 #endif
 
-    CPUMIPSCacheContext *cache; /**GDP**/
+    CPUCacheContext *cache; /**GDP**/
 
     const mips_def_t *cpu_model;
     void *irq[8];
@@ -506,11 +486,6 @@ struct CPUMIPSState {
 };
 
 #include "cpu-qom.h"
-
-/** GDP **/
-uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-uint8_t replace_lru(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-/** GDP **/
 
 #if !defined(CONFIG_USER_ONLY)
 int no_mmu_map_address (CPUMIPSState *env, hwaddr *physical, int *prot,
