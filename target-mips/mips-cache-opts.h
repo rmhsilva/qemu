@@ -24,6 +24,8 @@ struct MipsCacheOpts {
     char i_opt[16];
     char l2_opt[16];
 
+    unsigned char hw_cache_config;
+
     unsigned int *d_way_mask;
     unsigned int *i_way_mask;
     unsigned int *l2_way_mask;
@@ -70,6 +72,8 @@ struct MipsCacheOpts {
 extern struct MipsCacheOpts mips_cache_opts;
 
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg);
+
+void set_hw_cache_config(void);
 
 void log_cache_data(void);
 

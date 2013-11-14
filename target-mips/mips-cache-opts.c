@@ -242,6 +242,19 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         return 1;       
     }
 
+
+    // Another check for number of lines (required for MIPS format: 64 x 2^S)
+    // as S = i_index_width - 6 - mips_cache_opts.i_way_width
+    // TODO: ?Change command line options to specify number of lines per way
+    // rather than total number of lines?
+    if(*index_width < 6 + *way_width)
+    {
+        fprintf(stderr,
+            "*** Error: Number of lines %c-cache too small for chosen cache type\n"
+            ,which_cache);
+        return 1;   
+    }    
+
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
         mips_cache_opts.d_ld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
@@ -257,6 +270,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         mips_cache_opts.l2_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
         mips_cache_opts.l2_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
     }
+
 
     return 0; 
 #endif
@@ -351,6 +365,11 @@ void log_cache_data(void)
 
     }
 #endif
+}
+
+void set_hw_cache_config(void)
+{
+    mips_cache_opts.hw_cache_config = 1;
 }
 
 /* Returns 0 if n is 0 */

@@ -92,7 +92,8 @@ struct mips_def_t {
 
 /*****************************************************************************/
 /* MIPS CPU definitions */
-static const mips_def_t mips_defs[] =
+/* Removed const to set cache sizes using command line options */
+static mips_def_t mips_defs[] =
 {
     {
         .name = "4Kc",
@@ -539,10 +540,75 @@ static const mips_def_t mips_defs[] =
 #endif
 };
 
+static void config_cache(void)
+{
+    /* Use default config if cache options not passed to program */
+    if(!mips_cache_opts.hw_cache_config || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
+      return;
+
+    int i;
+    uint32_t tmp0, tmp1;
+    uint32_t is, il, ia, ds, dl, da, ss, sl, sa, ts, tl, ta;
+   
+    /* Cache masks L1 fields are 3 bit wide, L2/L3 4-bit wide*/ 
+    uint32_t icache_nmask = (7 << CP0C1_IS) | (7 << CP0C1_IL) | (7 << CP0C1_IA);
+    uint32_t dcache_nmask = (7 << CP0C1_DS) | (7 << CP0C1_DL) | (7 << CP0C1_DA);
+    uint32_t l2cache_nmask = (15 << CP0C2_SS) | (15 << CP0C2_SL) | (15 << CP0C2_SA);
+    uint32_t l3cache_nmask = (15 << CP0C2_TS) | (15 << CP0C2_TL) | (15 << CP0C2_TA);
+
+    /* Invert mask */
+    icache_nmask = ~icache_nmask;
+    dcache_nmask = ~dcache_nmask;
+    l2cache_nmask = ~l2cache_nmask;
+    l3cache_nmask = ~l3cache_nmask;
+
+    /* Calculate number of cache lines per way, format: 64 x 2^S */
+    is = (mips_cache_opts.use_i)? (mips_cache_opts.i_index_width -
+        6 - mips_cache_opts.i_way_width) : 0;
+    ds = (mips_cache_opts.use_d)? mips_cache_opts.d_index_width -
+        6 - mips_cache_opts.d_way_width : 0;
+    ss = (mips_cache_opts.use_l2)? mips_cache_opts.l2_index_width -
+        6 - mips_cache_opts.l2_way_width : 0;  
+    ts = 0;
+    
+    /* Calculate the size of a cache line (in bytes), format: 2 x 2^L */
+    il = (mips_cache_opts.use_i)? (mips_cache_opts.i_offset_width - 1) : 0;
+    dl = (mips_cache_opts.use_d)? (mips_cache_opts.d_offset_width - 1) : 0;
+    sl = (mips_cache_opts.use_l2)? (mips_cache_opts.l2_offset_width - 1) : 0;
+    tl = 0;
+
+    /* Calculate associativity, format: (A+1)-way set-associative */
+    ia = (mips_cache_opts.i_way_width)? ((1 << mips_cache_opts.i_way_width) - 1)
+        : 0;
+    da = (mips_cache_opts.d_way_width)? ((1 << mips_cache_opts.d_way_width) - 1)
+        : 0;
+    sa = (mips_cache_opts.l2_way_width)? ((1 << mips_cache_opts.l2_way_width) - 1)
+        : 0;
+    ta = 0;
+
+    for (i = 0; i < ARRAY_SIZE(mips_defs); i++)
+    {
+        /* Clear default cache configuration */
+        tmp0 = mips_defs[i].CP0_Config1 & icache_nmask & dcache_nmask;
+        tmp1 = mips_defs[i].CP0_Config2 & l2cache_nmask & l2cache_nmask;
+
+        /* Apply new configuration */
+        tmp0 |= (is << CP0C1_IS) | (il << CP0C1_IL) | (ia << CP0C1_IA) |
+            (ds << CP0C1_DS) | (dl << CP0C1_DL) | (da << CP0C1_DA);
+        tmp1 |= (ss << CP0C2_SS) | (sl << CP0C2_SL) | (sa << CP0C2_SA) |
+            (ts << CP0C2_TS) | (tl << CP0C2_TL) | (ta << CP0C2_TA);
+
+        /* Store values in CP0 registers */
+        mips_defs[i].CP0_Config1 = tmp0;
+        mips_defs[i].CP0_Config2 = tmp1;
+        printf("%8x %8x \n", mips_defs[i].CP0_Config2, tmp1);
+    }
+}
+
 static const mips_def_t *cpu_mips_find_by_name (const char *name)
 {
     int i;
-
+    config_cache();
     for (i = 0; i < ARRAY_SIZE(mips_defs); i++) {
         if (strcasecmp(name, mips_defs[i].name) == 0) {
             return &mips_defs[i];

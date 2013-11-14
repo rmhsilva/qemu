@@ -3014,6 +3014,10 @@ int main(int argc, char **argv, char **envp)
                       mips_cache_opts.l2_replacement); 
                 break;
 
+            case QEMU_OPTION_hwcache_config:
+                set_hw_cache_config();
+                break;
+
             case QEMU_OPTION_M:
                 machine = machine_parse(optarg);
                 break;

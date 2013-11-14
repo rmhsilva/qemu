@@ -3278,6 +3278,20 @@ rep - replacement algorithm:
   ran - random
 ETEXI
 
+DEF("hwcache_conf", 0, QEMU_OPTION_hwcache_config,
+    "-hwcache_conf\n"
+    "                update processor register with cache values\n",
+    QEMU_ARCH_MIPS)
+STEXI
+@item -hwcache_conf
+@findex -hwcache_conf
+Some architectures (e.g. MIPS) have configuration registers which contain
+cache information. This information is read by OS to optimize performance.
+Using -hwcache_conf option turns on storing values read from -icache, -dcache
+and -l2cache into configuration registers. Some cache sizes may result in
+a system not booting or not recognizing caches properly.
+ETEXI
+
 HXCOMM GDP MIPS definitions end
 
 HXCOMM This is the last statement. Insert new options before this line!
