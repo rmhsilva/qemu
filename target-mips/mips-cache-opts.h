@@ -74,6 +74,7 @@ extern struct MipsCacheOpts mips_cache_opts;
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg);
 
 void set_hw_cache_config(void);
+unsigned char check_hw_cache_constraints(void);
 
 void log_cache_data(void);
 

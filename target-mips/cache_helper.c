@@ -41,7 +41,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 
     uint8_t miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
-                        (1<<mips_cache_opts.i_way_width));  // TODO: shit shift
+                        (1<<mips_cache_opts.i_way_width));  // TODO: set const shift
 
     if (!miss_l1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;

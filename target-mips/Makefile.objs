@@ -1,4 +1,5 @@
 obj-y += translate.o dsp_helper.o op_helper.o lmi_helper.o helper.o cpu.o
-obj-y += cache_helper.o mips-cache-opts.o cache.o replacement_lru.o
+obj-y += cache_helper.o mips-cache-opts.o cache.o
+obj-y += replacement_lru.o replacement_lfu.o
 obj-y += gdbstub.o
 obj-$(CONFIG_SOFTMMU) += machine.o

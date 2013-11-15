@@ -194,20 +194,21 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     }
 
     /* Check cache type */
+    /* TODO: free way_mask memory */
     if(!strcmp(tmp2,"dm")) {
         *way_width = 0;
     }
     else if(!strcmp(tmp2,"2w")) {
         *way_width = 1;
-        *way_mask = (unsigned int *)g_malloc(sizeof(unsigned int));
-        (*way_mask)[0] = 1 << (*index_width - 1);
+        *way_mask = (unsigned int *)g_malloc0(2*sizeof(unsigned int));
+        (*way_mask)[1] = 1 << (*index_width - 1);
     }
     else if(!strcmp(tmp2,"4w")) {
         *way_width = 2;
-        *way_mask = (unsigned int *)g_malloc(3*sizeof(unsigned int));
-        (*way_mask)[0] = 1 << (*index_width - 2);
-        (*way_mask)[1] = 1 << (*index_width - 1);
-        (*way_mask)[2] = (*way_mask)[0] | (*way_mask)[1];          
+        *way_mask = (unsigned int *)g_malloc0(4*sizeof(unsigned int));
+        (*way_mask)[1] = 1 << (*index_width - 2);
+        (*way_mask)[2] = 1 << (*index_width - 1);
+        (*way_mask)[3] = (*way_mask)[1] | (*way_mask)[2];          
     }
     else
     {
@@ -240,20 +241,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         fprintf(stderr,
             "*** Error: Unrecognised replacement algorithm of %c-cache\n",which_cache);
         return 1;       
-    }
-
-
-    // Another check for number of lines (required for MIPS format: 64 x 2^S)
-    // as S = i_index_width - 6 - mips_cache_opts.i_way_width
-    // TODO: ?Change command line options to specify number of lines per way
-    // rather than total number of lines?
-    if(*index_width < 6 + *way_width)
-    {
-        fprintf(stderr,
-            "*** Error: Number of lines %c-cache too small for chosen cache type\n"
-            ,which_cache);
-        return 1;   
-    }    
+    }   
 
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
@@ -370,6 +358,28 @@ void log_cache_data(void)
 void set_hw_cache_config(void)
 {
     mips_cache_opts.hw_cache_config = 1;
+}
+
+// 0 on success, 1 on failure
+unsigned char check_hw_cache_constraints(void)
+{
+    // Check for number of lines (required for MIPS format: 64 x 2^S)
+    // as S = i_index_width - 6 - mips_cache_opts.i_way_width
+    if(mips_cache_opts.use_d)
+      if(mips_cache_opts.d_index_width < 6 + mips_cache_opts.d_way_width)
+      {
+          fprintf(stderr,
+              "*** Error: Number of lines of d-cache too small for chosen cache type\n");
+          exit(1);   
+      }
+    if(mips_cache_opts.use_i)
+      if(mips_cache_opts.i_index_width < 6 + mips_cache_opts.i_way_width)
+      {
+          fprintf(stderr,
+              "*** Error: Number of lines of i-cache too small for chosen cache type\n");
+          exit(1);   
+      }
+    return 0; 
 }
 
 /* Returns 0 if n is 0 */

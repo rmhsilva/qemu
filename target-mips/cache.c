@@ -102,10 +102,3 @@ cache_interface_t interface_rnd = {
     .fill_line      = simple_fill_line,
     .fetch_lock     = simple_fetch_lock
 };
-cache_interface_t interface_lfu = {
-    .lookup         = lookup_cache_dm,
-    .invalidate     = simple_invalidate,
-    .hit_invalidate = simple_hit_invalidate,
-    .fill_line      = simple_fill_line,
-    .fetch_lock     = simple_fetch_lock
-};

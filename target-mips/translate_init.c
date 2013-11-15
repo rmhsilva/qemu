@@ -546,6 +546,8 @@ static void config_cache(void)
     if(!mips_cache_opts.hw_cache_config || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
       return;
 
+    check_hw_cache_constraints();
+
     int i;
     uint32_t tmp0, tmp1;
     uint32_t is, il, ia, ds, dl, da, ss, sl, sa, ts, tl, ta;
