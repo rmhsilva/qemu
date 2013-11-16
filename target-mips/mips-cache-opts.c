@@ -265,28 +265,79 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 }
 
 
+///////////////////////
+// Logging stuff:
+
+void log_icache(char verbose) {
+    int i;
+    char fname[60] = "log-icache-";
+    pstrcat(fname, 60, mips_cache_opts.i_opt);
+    FILE *fd = fopen(fname, "w");
+
+    if (fd) {
+        if (verbose) printf("Logging icache data (%s)\n", fname);
+
+        for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
+            fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
+                mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
+        }
+
+        fclose(fd);
+    }
+    else {
+        printf("Failed to open file %s\n", fname);
+    }
+}
+
+void log_dcache(char verbose) {
+    int i;
+    char fname[60] = "log-dcache-";
+    pstrcat(fname, 60, mips_cache_opts.d_opt);
+    FILE *fd = fopen(fname, "w");
+
+    if (fd) {
+        if (verbose) printf("Logging dcache data (%s)\n", fname);
+
+        for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
+            fprintf(fd, "%d,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n", i,
+                mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
+                mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
+        }
+
+        fclose(fd);
+    }
+    else {
+        printf("Failed to open file %s\n", fname);
+    }
+}
+
+void log_l2cache(char verbose) {
+    int i;
+    char fname[60] = "log-l2cache-";
+    pstrcat(fname, 60, mips_cache_opts.l2_opt);
+    FILE *fd = fopen(fname, "w");
+
+    if (fd) {
+        if (verbose) printf("Logging L2 cache data (%s)\n", fname);
+
+        for (i=0; i<mips_cache_opts.l2_no_of_lines; i++) {
+            fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
+                mips_cache_opts.l2_hit_cnt[i], mips_cache_opts.l2_miss_cnt[i]);
+        }
+
+        fclose(fd);
+    }
+    else {
+        printf("Failed to open file %s\n", fname);
+    }
+}
+
+
 void log_cache_data(void)
 {
 #ifdef TARGET_MIPS
-    int i;
     if (mips_cache_opts.use_i) {
-        char fname[60] = "log-icache-";
-        pstrcat(fname, 60, mips_cache_opts.i_opt);
-        FILE *fd = fopen(fname, "w");
-
-        if (fd) {
-            printf("Logging icache data (%s)\n", fname);
-            
-            for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
-                fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
-                    mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
-            }
-
-            fclose(fd);
-        }
-        else {
-            printf("Failed to open file %s\n", fname);
-        }
+        log_icache(1);
 
         free(mips_cache_opts.i_hit_cnt);
         free(mips_cache_opts.i_miss_cnt);
@@ -296,24 +347,7 @@ void log_cache_data(void)
     }
 
     if (mips_cache_opts.use_d) {
-        char fname[60] = "log-dcache-";
-        pstrcat(fname, 60, mips_cache_opts.d_opt);
-        FILE *fd = fopen(fname, "w");
-
-        if (fd) {
-            printf("Logging dcache data (%s)\n", fname);
-
-            for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
-                fprintf(fd, "%d,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n", i,
-                    mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
-                    mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
-            }
-
-            fclose(fd);
-        }
-        else {
-            printf("Failed to open file %s\n", fname);
-        }
+        log_dcache(1);
 
         free(mips_cache_opts.d_ld_hit_cnt);
         free(mips_cache_opts.d_st_hit_cnt);
@@ -328,23 +362,7 @@ void log_cache_data(void)
     }
 
     if (mips_cache_opts.use_l2) {
-        char fname[60] = "log-l2cache-";
-        pstrcat(fname, 60, mips_cache_opts.l2_opt);
-        FILE *fd = fopen(fname, "w");
-
-        if (fd) {
-            printf("Logging L2 cache data (%s)\n", fname);
-            
-            for (i=0; i<mips_cache_opts.l2_no_of_lines; i++) {
-                fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
-                    mips_cache_opts.l2_hit_cnt[i], mips_cache_opts.l2_miss_cnt[i]);
-            }
-
-            fclose(fd);
-        }
-        else {
-            printf("Failed to open file %s\n", fname);
-        }
+        log_l2cache(1);
 
         free(mips_cache_opts.l2_hit_cnt);
         free(mips_cache_opts.l2_miss_cnt);
