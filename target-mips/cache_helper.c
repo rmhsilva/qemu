@@ -179,7 +179,7 @@ void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
 void helper_cache_invalidate_ ## type (CPUMIPSState *env, unsigned int addr)  \
 {                                                                             \
     (*env->cache->type##cache_api->invalidate)(env->cache->type##cache,       \
-        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));                                        \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
 }
 HELPER_INVALIDATE(i)
 HELPER_INVALIDATE(d)
@@ -238,102 +238,3 @@ HELPER_FETCH_LOCK(i)
 HELPER_FETCH_LOCK(d)
 HELPER_FETCH_LOCK(l2)
 #undef HELPER_FETCH_LOCK
-
-
-// void helper_cache_invalidate_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     (*env->cache->icache_api->invalidate)(env->cache->icache, 
-//         DECODE_INDEX_i(addr));
-// }
-
-// void helper_cache_load_tag_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     // TODO - what about TagHi?
-//     env->CP0_TagLo = env->cache->icache[DECODE_INDEX_i(addr)].tag;
-// }
-
-// void helper_cache_store_tag_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     env->cache->icache[DECODE_INDEX_i(addr)].tag = env->CP0_TagLo;
-// }
-
-// void helper_cache_hit_invalidate_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     hit_invalidate(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
-// }
-
-// void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     fill_line(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
-// }
-
-// void helper_cache_fetch_lock_i(CPUMIPSState *env, unsigned int addr)
-// {
-//     fetch_lock(env->cache->icache, DECODE_INDEX_i(addr), DECODE_TAG_i(addr));
-// }
-
-
-
-// void helper_cache_invalidate_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     invalidate(env->cache->dcache, DECODE_INDEX_d(addr));
-// }
-
-// void helper_cache_load_tag_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     // TODO - what about TagHi?
-//     env->CP0_TagLo = env->cache->dcache[DECODE_INDEX_d(addr)].tag;
-// }
-
-// void helper_cache_store_tag_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     env->cache->dcache[DECODE_INDEX_d(addr)].tag = env->CP0_TagLo;
-// }
-
-// void helper_cache_hit_invalidate_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     hit_invalidate(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
-// }
-
-// void helper_cache_fill_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     fill_line(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
-// }
-
-// void helper_cache_fetch_lock_d(CPUMIPSState *env, unsigned int addr)
-// {
-//     fetch_lock(env->cache->dcache, DECODE_INDEX_d(addr), DECODE_TAG_d(addr));
-// }
-
-
-
-// void helper_cache_invalidate_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     invalidate(env->cache->l2cache, DECODE_INDEX_l2(addr));
-// }
-
-// void helper_cache_load_tag_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     // TODO - what about TagHi?
-//     env->CP0_TagLo = env->cache->l2cache[DECODE_INDEX_l2(addr)].tag;
-// }
-
-// void helper_cache_store_tag_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     env->cache->l2cache[DECODE_INDEX_l2(addr)].tag = env->CP0_TagLo;
-// }
-
-// void helper_cache_hit_invalidate_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     hit_invalidate(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
-// }
-
-// void helper_cache_fill_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     fill_line(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
-// }
-
-// void helper_cache_fetch_lock_l2(CPUMIPSState *env, unsigned int addr)
-// {
-//     fetch_lock(env->cache->l2cache, DECODE_INDEX_l2(addr), DECODE_TAG_l2(addr));
-// }
