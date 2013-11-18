@@ -2212,7 +2212,8 @@ static void gen_shift_imm(DisasContext *ctx, uint32_t opc,
 /**GDP**/
 
 // Switch on operation bits:
-#define CACHE_OP_SWITCH(type) switch(op & 0x1C) {                   \
+//TODO: case 5: fill is only for I cache, for D cache it should be hit invalidate
+#define CACHE_OP_SWITCH(type) switch(op >> 2) {                   \
     case 0:                                                         \
         gen_helper_0e0i(cache_invalidate_##type, addr);             \
     break;                                                          \
@@ -2234,6 +2235,7 @@ static void gen_shift_imm(DisasContext *ctx, uint32_t opc,
     case 6: /* No-op for writethrough cache! */                     \
     case 3: /* Optional */                                          \
     default:                                                        \
+        printf("Other!\n");                                    \
     break;                                                          \
 }
 
@@ -2242,7 +2244,6 @@ static void gen_cache_op(DisasContext *ctx, uint32_t opc,
                             int op, int base, int16_t offset)
 {
     unsigned int addr = base + offset;
-
     switch(op & 0x03) {             // Switch on cache selection bits
         case 0: // I-Cache
             if(mips_cache_opts.use_i)

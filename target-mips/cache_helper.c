@@ -55,8 +55,14 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     }
 #endif
 
+#ifndef CONFIG_USER_ONLY 
+    hwaddr phys_address = (hwaddr)get_phys_addr_cache(env, pc_addr);
+#else
+    hwaddr phys_address = (hwaddr)pc_addr;
+#endif
+
     uint32_t idx_l1 = DECODE_INDEX_i(pc_addr);
-    uint32_t tag_l1 = DECODE_TAG_i(pc_addr);
+    uint32_t tag_l1 = DECODE_TAG_i(phys_address);
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
@@ -82,8 +88,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
                 log_l2cache(0);
             }
 
-            idx_l2 = DECODE_INDEX_l2(pc_addr);
-            tag_l2 = DECODE_TAG_l2(pc_addr);
+            idx_l2 = DECODE_INDEX_l2(phys_address);
+            tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         (1<<mips_cache_opts.l2_way_width));
@@ -115,7 +121,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     hwaddr phys_address = (hwaddr)addr;
 #endif
 
-    uint32_t idx_l1 = DECODE_INDEX_d(phys_address);
+    uint32_t idx_l1 = DECODE_INDEX_d(addr);
     uint32_t tag_l1 = DECODE_TAG_d(phys_address);
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
