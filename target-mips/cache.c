@@ -92,13 +92,3 @@ cache_interface_t interface_dm = {
     .fill_line      = simple_fill_line,
     .fetch_lock     = simple_fetch_lock
 };
-
-
-// TEMP - TODO remove
-cache_interface_t interface_rnd = {
-    .lookup         = lookup_cache_dm,
-    .invalidate     = simple_invalidate,
-    .hit_invalidate = simple_hit_invalidate,
-    .fill_line      = simple_fill_line,
-    .fetch_lock     = simple_fetch_lock
-};

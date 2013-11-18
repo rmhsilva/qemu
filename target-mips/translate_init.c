@@ -18,6 +18,10 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+/* GDP - used to seed random number generator */
+#include <stdlib.h>
+#include <time.h>
+
 /* CPU / CPU family specific config register values. */
 
 /* Have config1, uncached coherency */
@@ -732,6 +736,10 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
+
+    //pass seed to random number generator
+    srand(time(NULL));
+  
     if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
       printf("Initialising cache... ");
     
