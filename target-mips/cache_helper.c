@@ -26,6 +26,15 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#ifdef UNCACHED_REGION
+static inline uint8_t check_cached_region(target_ulong addr)
+{
+    if(addr < UNCACHED_START || addr > UNCACHED_END)
+        return 0;
+    return 1;
+}
+#endif
+
 /*****************************************************************************/
 // Main Helpers
 
@@ -34,6 +43,12 @@
  */
 void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 {
+#ifdef UNCACHED_REGION
+    if(check_cached_region(pc_addr)) {
+        return;
+    }
+#endif
+
     uint32_t idx_l1 = DECODE_INDEX_i(pc_addr);
     uint32_t tag_l1 = DECODE_TAG_i(pc_addr);
     uint32_t idx_l2, tag_l2;
@@ -70,6 +85,12 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 static inline void 
 helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load) 
 {
+#ifdef UNCACHED_REGION
+    if(check_cached_region(addr)) {
+        return;
+    }
+#endif
+
     /* if is_load is 0 then it is a store instruction */
 #ifndef CONFIG_USER_ONLY 
     hwaddr phys_address = (hwaddr)get_phys_addr_cache(env, addr);

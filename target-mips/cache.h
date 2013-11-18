@@ -6,6 +6,16 @@
 #ifndef GDP_CACHE
 #define GDP_CACHE value
 
+#ifdef TARGET_MIPS
+
+#ifndef UNCACHED_REGION
+#define UNCACHED_REGION
+#define UNCACHED_START  0xA0000000
+#define UNCACHED_END    0xBFFFFFFF
+#endif
+
+#endif
+
 #include <stdlib.h>
 #include <stdint.h>
 
