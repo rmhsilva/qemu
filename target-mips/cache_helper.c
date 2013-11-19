@@ -39,7 +39,7 @@ static inline uint8_t check_cached_region(target_ulong addr)
 #define I_LOG 2000
 #define D_LOG 2000
 #define L2_LOG 2000
-static int i_cnt = 0, d_cnt = 0, l2_cnt = 0;
+/*static int i_cnt = 0, d_cnt = 0, l2_cnt = 0;*/
 
 /*****************************************************************************/
 // Main Helpers
@@ -66,11 +66,11 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    // Dump data periodically
-    if (i_cnt++ >= I_LOG) {
-        i_cnt = 0;
-        log_icache(0);
-    }
+/*    // Dump data periodically*/
+/*    if (i_cnt++ >= I_LOG) {*/
+/*        i_cnt = 0;*/
+/*        log_icache(0);*/
+/*    }*/
 
     uint8_t miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
@@ -83,10 +83,10 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
         mips_cache_opts.i_miss_cnt[idx_l1]++;
 
         if(mips_cache_opts.use_l2) {
-            if (l2_cnt++ >= L2_LOG) {
-                l2_cnt = 0;
-                log_l2cache(0);
-            }
+/*            if (l2_cnt++ >= L2_LOG) {*/
+/*                l2_cnt = 0;*/
+/*                log_l2cache(0);*/
+/*            }*/
 
             idx_l2 = DECODE_INDEX_l2(phys_address);
             tag_l2 = DECODE_TAG_l2(phys_address);
@@ -126,11 +126,11 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t idx_l2, tag_l2;
     uint8_t miss_l2;
 
-    // Dump data periodically
-    if (d_cnt++ >= D_LOG) {
-        d_cnt = 0;
-        log_dcache(0);
-    }
+/*    // Dump data periodically*/
+/*    if (d_cnt++ >= D_LOG) {*/
+/*        d_cnt = 0;*/
+/*        log_dcache(0);*/
+/*    }*/
 
     uint8_t miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
@@ -151,10 +151,10 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
         else
             mips_cache_opts.d_st_miss_cnt[idx_l1]++;
         if(mips_cache_opts.use_l2) {
-            if (l2_cnt++ >= L2_LOG) {
-                l2_cnt = 0;
-                log_l2cache(0);
-            }
+/*            if (l2_cnt++ >= L2_LOG) {*/
+/*                l2_cnt = 0;*/
+/*                log_l2cache(0);*/
+/*            }*/
 
             idx_l2 = DECODE_INDEX_l2(phys_address);
             tag_l2 = DECODE_TAG_l2(phys_address);
