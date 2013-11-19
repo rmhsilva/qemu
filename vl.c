@@ -3014,8 +3014,14 @@ int main(int argc, char **argv, char **envp)
                       mips_cache_opts.l2_replacement); 
                 break;
 
-            case QEMU_OPTION_hwcache_config:
-                set_hw_cache_config();
+            case QEMU_OPTION_no_hwcache_config:
+                unset_hwcache_config();
+                printf("Warning: Hardware cache configuration disabled.\n");
+                printf("All cache ops are treated NOPs.\n");
+                break;
+
+            case QEMU_OPTION_onchip_l2:
+                enable_onchip_l2();
                 break;
 
             case QEMU_OPTION_M:

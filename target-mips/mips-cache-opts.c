@@ -373,9 +373,14 @@ void log_cache_data(void)
 #endif
 }
 
-void set_hw_cache_config(void)
+void unset_hwcache_config(void)
 {
-    mips_cache_opts.hw_cache_config = 1;
+    mips_cache_opts.no_hwcache_config = 1;
+}
+
+void enable_onchip_l2(void)
+{
+    mips_cache_opts.onchip_l2 = 1;
 }
 
 // 0 on success, 1 on failure

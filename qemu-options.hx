@@ -3278,18 +3278,31 @@ rep - replacement algorithm:
   ran - random
 ETEXI
 
-DEF("hwcache_conf", 0, QEMU_OPTION_hwcache_config,
-    "-hwcache_conf\n"
-    "                update processor register with cache values\n",
+DEF("no_hwcache_conf", 0, QEMU_OPTION_no_hwcache_config,
+    "-no_hwcache_conf\n"
+    "                do not update processor register with cache values\n",
     QEMU_ARCH_MIPS)
 STEXI
-@item -hwcache_conf
-@findex -hwcache_conf
+@item -no_hwcache_conf
+@findex -no_hwcache_conf
 Some architectures (e.g. MIPS) have configuration registers which contain
-cache information. This information is read by OS to optimize performance.
-Using -hwcache_conf option turns on storing values read from -icache, -dcache
-and -l2cache into configuration registers. Some cache sizes may result in
-a system not booting or not recognizing caches properly.
+cache information. This information is read by OS to make caches functional.
+Using -no_hwcache_conf option turns off storing values read from -icache, -dcache
+and -l2cache into configuration registers. If not disabled, some cache sizes may
+result in a system not booting or not recognizing caches properly.
+ETEXI
+
+DEF("onchip_l2", 0, QEMU_OPTION_onchip_l2,
+    "-onchip_l2\n"
+    "                update processor regiester with L2 cache configuration\n",
+    QEMU_ARCH_MIPS)
+STEXI
+@item -onchip_l2
+@findex -onchip_l2
+Some architectures (e.g. MIPS) have configuration registers which contain
+cache information. This information is read by OS to make caches functional.
+Using -onchip_l2 option enables storing L2 cache configurations values into
+processor config registers. Caution: This option is suppressed by -no_hwcache_conf.
 ETEXI
 
 HXCOMM GDP MIPS definitions end

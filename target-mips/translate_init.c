@@ -547,7 +547,7 @@ static mips_def_t mips_defs[] =
 static void config_cache(void)
 {
     /* Use default config if cache options not passed to program */
-    if(!mips_cache_opts.hw_cache_config || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
+    if(mips_cache_opts.no_hwcache_config || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
       return;
 
     check_hw_cache_constraints();
@@ -555,6 +555,7 @@ static void config_cache(void)
     int i;
     uint32_t tmp0, tmp1;
     uint32_t is, il, ia, ds, dl, da, ss, sl, sa, ts, tl, ta;
+    unsigned char onchip_l2 = mips_cache_opts.onchip_l2;
    
     /* Cache masks L1 fields are 3 bit wide, L2/L3 4-bit wide*/ 
     uint32_t icache_nmask = (7 << CP0C1_IS) | (7 << CP0C1_IL) | (7 << CP0C1_IA);
@@ -573,14 +574,21 @@ static void config_cache(void)
         6 - mips_cache_opts.i_way_width) : 0;
     ds = (mips_cache_opts.use_d)? mips_cache_opts.d_index_width -
         6 - mips_cache_opts.d_way_width : 0;
-    ss = (mips_cache_opts.use_l2)? mips_cache_opts.l2_index_width -
-        6 - mips_cache_opts.l2_way_width : 0;  
+    if(onchip_l2) {
+        ss = (mips_cache_opts.use_l2)? mips_cache_opts.l2_index_width -
+            6 - mips_cache_opts.l2_way_width : 0;
+    }
+    else
+        ss = 0;
     ts = 0;
     
     /* Calculate the size of a cache line (in bytes), format: 2 x 2^L */
     il = (mips_cache_opts.use_i)? (mips_cache_opts.i_offset_width - 1) : 0;
     dl = (mips_cache_opts.use_d)? (mips_cache_opts.d_offset_width - 1) : 0;
-    sl = (mips_cache_opts.use_l2)? (mips_cache_opts.l2_offset_width - 1) : 0;
+    if(onchip_l2)
+        sl = (mips_cache_opts.use_l2)? (mips_cache_opts.l2_offset_width - 1) : 0;
+    else
+        sl = 0;
     tl = 0;
 
     /* Calculate associativity, format: (A+1)-way set-associative */
@@ -588,8 +596,12 @@ static void config_cache(void)
         : 0;
     da = (mips_cache_opts.d_way_width)? ((1 << mips_cache_opts.d_way_width) - 1)
         : 0;
-    sa = (mips_cache_opts.l2_way_width)? ((1 << mips_cache_opts.l2_way_width) - 1)
-        : 0;
+    if(onchip_l2) {
+        sa = (mips_cache_opts.l2_way_width)?
+            ((1 << mips_cache_opts.l2_way_width) - 1) : 0;
+    }
+    else
+        sa = 0;
     ta = 0;
 
     for (i = 0; i < ARRAY_SIZE(mips_defs); i++)
@@ -607,7 +619,6 @@ static void config_cache(void)
         /* Store values in CP0 registers */
         mips_defs[i].CP0_Config1 = tmp0;
         mips_defs[i].CP0_Config2 = tmp1;
-        printf("%8x %8x \n", mips_defs[i].CP0_Config2, tmp1);
     }
 }
 
