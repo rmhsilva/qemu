@@ -3014,9 +3014,9 @@ int main(int argc, char **argv, char **envp)
                       mips_cache_opts.l2_replacement); 
                 break;
 
-            case QEMU_OPTION_no_hwcache_config:
-                unset_hwcache_config();
-                printf("Warning: Hardware cache configuration disabled.\n");
+            case QEMU_OPTION_transparent_cache:
+                set_transparent_cache();
+                printf("Warning: Caches defined as transparent.\n");
                 printf("All cache ops are treated NOPs.\n");
                 break;
 

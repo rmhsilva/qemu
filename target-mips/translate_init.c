@@ -547,7 +547,7 @@ static mips_def_t mips_defs[] =
 static void config_cache(void)
 {
     /* Use default config if cache options not passed to program */
-    if(mips_cache_opts.no_hwcache_config || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
+    if(mips_cache_opts.transparent_cache || (!mips_cache_opts.use_i && !mips_cache_opts.use_d))
       return;
 
     check_hw_cache_constraints();

@@ -373,9 +373,9 @@ void log_cache_data(void)
 #endif
 }
 
-void unset_hwcache_config(void)
+void set_transparent_cache(void)
 {
-    mips_cache_opts.no_hwcache_config = 1;
+    mips_cache_opts.transparent_cache = 1;
 }
 
 void enable_onchip_l2(void)

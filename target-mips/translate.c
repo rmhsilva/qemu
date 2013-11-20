@@ -15488,6 +15488,8 @@ static void decode_opc (CPUMIPSState *env, DisasContext *ctx)
         check_cp0_enabled(ctx);
         check_insn(ctx, ISA_MIPS3 | ISA_MIPS32);
         /**GDP**/
+        if(mips_cache_opts.transparent_cache)
+            return;
         // rs=>base, rt=>op, imm=>offset
         gen_cache_op(ctx, op, rt, rs, imm);
         break;

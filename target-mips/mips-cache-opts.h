@@ -24,7 +24,7 @@ struct MipsCacheOpts {
     char i_opt[16];
     char l2_opt[16];
 
-    unsigned char no_hwcache_config;
+    unsigned char transparent_cache;
     unsigned char onchip_l2;
 
     unsigned int *d_way_mask;
@@ -75,7 +75,7 @@ extern struct MipsCacheOpts mips_cache_opts;
 unsigned char proc_mips_cache_opt(char which_cache, const char *arg);
 
 
-void unset_hwcache_config(void);
+void set_transparent_cache(void);
 void enable_onchip_l2(void);
 unsigned char check_hw_cache_constraints(void);
 
