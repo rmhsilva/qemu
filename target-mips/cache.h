@@ -54,10 +54,10 @@ struct cache_interface_t {
      * @param  tag       Tag of memory accessed
      * @param  *mask     Index mask (for set-associative caches)
      * @param  n_indexes Number of indexes (sets)
-     * @return           0: hit, 1: miss
+     * @return           +ve: hit, -1: miss
      */
-    uint8_t (*lookup)(cache_item_t *cache, uint32_t index, uint32_t tag,
-                      unsigned int *mask, uint8_t n_indexes);
+    int (*lookup)(cache_item_t *cache, uint32_t index, uint32_t tag,
+                    unsigned int *mask, uint8_t n_indexes);
     /**
      * invalidate: mark a cache line as invalid and remove lock
      */
@@ -65,16 +65,19 @@ struct cache_interface_t {
     /**
      * hit_invalidate: mark a line as invalid IF it is currently valid
      */
-    void (*hit_invalidate)(cache_item_t *cache, uint32_t index, uint32_t tag);
+    void (*hit_invalidate) (cache_item_t *cache, uint32_t index, uint32_t tag,
+                            unsigned int *mask, uint8_t n_indexes);
     /**
      * fill_line: fill a specified cache line (mark it as valid etc)
      * @return       0: success, 1: error
      */
-    uint8_t (*fill_line)(cache_item_t *cache, uint32_t index, uint32_t tag);
+    int (*fill_line) (cache_item_t *cache, uint32_t index, uint32_t tag,
+                        unsigned int *mask, uint8_t n_indexes);
     /**
      * fetch_lock: fill a cache line AND mark it as locked
      */
-    void (*fetch_lock)(cache_item_t *cache, uint32_t index, uint32_t tag);
+    void (*fetch_lock) (cache_item_t *cache, uint32_t index, uint32_t tag,
+                        unsigned int *mask, uint8_t n_indexes);
 };
 
 
@@ -114,6 +117,13 @@ struct CPUCacheContext {
 #define DECODE_TAG_l2(addr) \
     DECODE_TAG(addr, mips_cache_opts.l2_index_width+mips_cache_opts.l2_offset_width)
 
+#define DECODE_INDEX_WAY_d(addr) \
+    DECODE_INDEX(addr, mips_cache_opts.d_index_mask, mips_cache_opts.d_offset_width)
+#define DECODE_INDEX_WAY_i(addr) \
+    DECODE_INDEX(addr, mips_cache_opts.i_index_mask, mips_cache_opts.i_offset_width)
+#define DECODE_INDEX_WAY_l2(addr) \
+    DECODE_INDEX(addr, mips_cache_opts.l2_index_mask, mips_cache_opts.l2_offset_width)
+
 
 /*****************************************************************************/
 /**
@@ -123,12 +133,12 @@ struct CPUCacheContext {
 
 // 'Default' (simple) cache operation functions
 void simple_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag);
-void simple_hit_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag);
-uint8_t simple_fill_line(cache_item_t *cache, uint32_t index, uint32_t tag);
-void simple_fetch_lock(cache_item_t *cache, uint32_t index, uint32_t tag);
+void simple_hit_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+int simple_fill_line(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+void simple_fetch_lock(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
 
 // Direct Mapped cache lookup
-uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
+int lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
                         unsigned int *mask, uint8_t n_indexes);
 
 // Interface to the Direct Mapped functionality

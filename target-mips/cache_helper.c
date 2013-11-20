@@ -41,6 +41,10 @@ static inline uint8_t check_cached_region(target_ulong addr)
 #define L2_LOG 2000
 /*static int i_cnt = 0, d_cnt = 0, l2_cnt = 0;*/
 
+#if !defined(CONFIG_USER_ONLY)
+static uint8_t asid, asid_prev;
+#endif
+
 /*****************************************************************************/
 // Main Helpers
 
@@ -55,7 +59,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     }
 #endif
 
-#ifndef CONFIG_USER_ONLY 
+#ifndef CONFIG_USER_ONLY
     hwaddr phys_address = (hwaddr)get_phys_addr_cache(env, pc_addr);
 #else
     hwaddr phys_address = (hwaddr)pc_addr;
@@ -64,7 +68,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     uint32_t idx_l1 = DECODE_INDEX_i(pc_addr);
     uint32_t tag_l1 = DECODE_TAG_i(phys_address);
     uint32_t idx_l2, tag_l2;
-    uint8_t miss_l2;
+    int miss_l2;
 
 /*    // Dump data periodically*/
 /*    if (i_cnt++ >= I_LOG) {*/
@@ -72,11 +76,19 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 /*        log_icache(0);*/
 /*    }*/
 
-    uint8_t miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
+#if !defined(CONFIG_USER_ONLY)
+    asid = env->CP0_EntryHi & 0xFF;
+    if (asid_prev != asid) {
+        asid_prev = asid;
+        printf("******** new ASID: %u\n", asid);
+    }
+#endif
+
+    int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
                         (1<<mips_cache_opts.i_way_width));  // TODO: set const shift
 
-    if (!miss_l1) {
+    if (miss_l1 != -1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
     }
     else {
@@ -93,7 +105,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         (1<<mips_cache_opts.l2_way_width));
-            if (!miss_l2)
+            if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
                 mips_cache_opts.l2_miss_cnt[idx_l2]++;
@@ -124,7 +136,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t idx_l1 = DECODE_INDEX_d(addr);
     uint32_t tag_l1 = DECODE_TAG_d(phys_address);
     uint32_t idx_l2, tag_l2;
-    uint8_t miss_l2;
+    int miss_l2;
 
 /*    // Dump data periodically*/
 /*    if (d_cnt++ >= D_LOG) {*/
@@ -132,13 +144,13 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
 /*        log_dcache(0);*/
 /*    }*/
 
-    uint8_t miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
+    int miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
                         (1<<mips_cache_opts.d_way_width));
     
     // TODO: dirty bit etc for write-back?
     
-    if (!miss_l1) {
+    if (miss_l1 != -1) {
         if (is_load)
             mips_cache_opts.d_ld_hit_cnt[idx_l1]++;
         else {
@@ -161,7 +173,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         (1<<mips_cache_opts.l2_way_width));
-            if (!miss_l2)
+            if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
                 mips_cache_opts.l2_miss_cnt[idx_l2]++;
@@ -181,66 +193,88 @@ void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
 // Cache Operation helpers:
 
 
-#define HELPER_INVALIDATE(type) \
-void helper_cache_invalidate_ ## type (CPUMIPSState *env, unsigned int addr)  \
-{                                                                             \
-    (*env->cache->type##cache_api->invalidate)(env->cache->type##cache,       \
-        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
+#define HELPER_INVALIDATE(type)                                                \
+void helper_cache_invalidate_ ## type (CPUMIPSState *env, unsigned int addr)   \
+{                                                                              \
+    printf("******** bzzzzap! Cache op 0 called\n");                           \
+    (*env->cache->type##cache_api->invalidate)(env->cache->type##cache,        \
+        DECODE_INDEX_WAY_ ## type (addr), DECODE_TAG_ ## type (addr));         \
 }
 HELPER_INVALIDATE(i)
 HELPER_INVALIDATE(d)
 HELPER_INVALIDATE(l2)
 #undef HELPER_INVALIDATE
 
-#define HELPER_LOAD_TAG(type) \
-void helper_cache_load_tag_ ## type (CPUMIPSState *env, unsigned int addr)    \
-{                                                                             \
-    env->CP0_TagLo = env->cache->type##cache[DECODE_INDEX_ ## type (addr)].tag;\
+// NOTE: TagHi is optional. 
+// Also, we're not storing DataHi/Lo at all as we don't store data anywhere.
+#define HELPER_LOAD_TAG(type)                                                  \
+void helper_cache_load_tag_ ## type (CPUMIPSState *env, unsigned int addr)     \
+{                                                                              \
+    printf("******** bzzzzap! Cache op 1 called\n");                           \
+    env->CP0_TagLo = env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].tag;\
 }
 HELPER_LOAD_TAG(i)
 HELPER_LOAD_TAG(d)
 HELPER_LOAD_TAG(l2)
 #undef HELPER_LOAD_TAG
 
-#define HELPER_STORE_TAG(type) \
-void helper_cache_store_tag_ ## type (CPUMIPSState *env, unsigned int addr)   \
-{                                                                             \
-    env->cache->type##cache[DECODE_INDEX_ ## type (addr)].tag = env->CP0_TagLo;\
+#define HELPER_STORE_TAG(type)                                                 \
+void helper_cache_store_tag_ ## type (CPUMIPSState *env, unsigned int addr)    \
+{                                                                              \
+    printf("******** bzzzzap! Cache op 2 called\n");                           \
+    env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].tag = env->CP0_TagLo;\
+    env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].lock = 0;        \
 }
 HELPER_STORE_TAG(i)
 HELPER_STORE_TAG(d)
 HELPER_STORE_TAG(l2)
 #undef HELPER_STORE_TAG
 
-#define HELPER_HIT_INVALIDATE(type) \
+#define HELPER_HIT_INVALIDATE(type)                                            \
 void helper_cache_hit_invalidate_ ## type(CPUMIPSState *env, unsigned int addr)\
 {                                                                              \
+    printf("******** bzzzzap! Cache op 4 called\n");                           \
     (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
-        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));             \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
+        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
 }
 HELPER_HIT_INVALIDATE(i)
 HELPER_HIT_INVALIDATE(d)
 HELPER_HIT_INVALIDATE(l2)
 #undef HELPER_HIT_INVALIDATE
 
-#define HELPER_FILL_LINE(type) \
-void helper_cache_fill_ ## type(CPUMIPSState *env, unsigned int addr)         \
-{                                                                             \
-    (*env->cache->type##cache_api->fill_line)(env->cache->type##cache,        \
-        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
+// D-Cache and L2 cache DO NOT have a Fill instruction.
+// This code is for Hit Writeback Invalidate
+#define HELPER_FILL_LINE(type)                                                 \
+void helper_cache_fill_ ## type(CPUMIPSState *env, unsigned int addr)          \
+{                                                                              \
+    printf("******** bzzzzap! Cache op 5 called\n");                           \
+    (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
+        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
 }
-HELPER_FILL_LINE(i)
 HELPER_FILL_LINE(d)
 HELPER_FILL_LINE(l2)
 #undef HELPER_FILL_LINE
 
-#define HELPER_FETCH_LOCK(type) \
-void helper_cache_fetch_lock_ ## type(CPUMIPSState *env, unsigned int addr)   \
-{                                                                             \
-    (*env->cache->type##cache_api->fetch_lock)(env->cache->type##cache,       \
-        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr));            \
+void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr) {
+    // I-Cache is the only cache with an actual fill instruction
+    (*env->cache->icache_api->fill_line)(env->cache->icache,
+        DECODE_INDEX_i(addr), DECODE_TAG_i(addr),
+        mips_cache_opts.i_way_mask, (1<<mips_cache_opts.i_way_width));
+}
+
+#define HELPER_FETCH_LOCK(type)                                                \
+void helper_cache_fetch_lock_ ## type(CPUMIPSState *env, unsigned int addr)    \
+{                                                                              \
+    printf("******** bzzzzap! Cache op 7 called\n");                           \
+    (*env->cache->type##cache_api->fetch_lock)(env->cache->type##cache,        \
+        DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
+        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
 }
 HELPER_FETCH_LOCK(i)
 HELPER_FETCH_LOCK(d)
-HELPER_FETCH_LOCK(l2)
 #undef HELPER_FETCH_LOCK
+
+// No-op for L2.
+void helper_cache_fetch_lock_l2(CPUMIPSState *env, unsigned int addr) { }

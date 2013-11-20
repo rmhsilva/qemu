@@ -6,8 +6,8 @@
  * Defined here because it's simple enough to not need its own file, and it's
  * the 'default' cache structure.
  */
-uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
-                        unsigned int *mask, uint8_t n_indexes)
+int lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
+                    unsigned int *mask, uint8_t n_indexes)
 {
     if(cache[index].tag == tag && cache[index].valid == 1)
         return 0;
@@ -19,7 +19,7 @@ uint8_t lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
         else {
             printf("Line Locked!!\n");
         }
-        return 1;
+        return -1;
     }
 }
 
@@ -34,13 +34,29 @@ void simple_invalidate (cache_item_t *cache, uint32_t index, uint32_t tag)
 {
     cache[index].valid = 0;
     cache[index].lock = 0;
+    cache[index].r_field = 0;
+}
+
+/**
+ * hit_invalidate: mark a line as invalid IF it is currently valid
+ */
+void simple_hit_invalidate (cache_item_t *cache, uint32_t index, uint32_t tag,
+                            unsigned int *mask, uint8_t n_indexes)
+{
+    unsigned int current_tag = cache[index].tag;
+
+    if((current_tag==tag) && (cache[index].valid==1)) {
+        cache[index].valid = 0;
+        cache[index].lock = 0;
+    }
 }
 
 /**
  * fill_line: fill a specified cache line (mark it as valid etc)
  * @return       0: success, 1: error
  */
-uint8_t simple_fill_line (cache_item_t *cache, uint32_t index, uint32_t tag)
+int simple_fill_line (cache_item_t *cache, uint32_t index, uint32_t tag,
+                        unsigned int *mask, uint8_t n_indexes)
 {
     if (cache[index].lock == 0) {
         cache[index].tag = tag;
@@ -54,22 +70,10 @@ uint8_t simple_fill_line (cache_item_t *cache, uint32_t index, uint32_t tag)
 }
 
 /**
- * hit_invalidate: mark a line as invalid IF it is currently valid
- */
-void simple_hit_invalidate (cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    unsigned int current_tag = cache[index].tag;
-
-    if((current_tag==tag) && (cache[index].valid==1)) {
-        cache[index].valid = 0;
-        cache[index].lock = 0;
-    }
-}
-
-/**
  * fetch_lock: fill a cache line AND mark it as locked
  */
-void simple_fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag)
+void simple_fetch_lock (cache_item_t *cache, uint32_t index, uint32_t tag,
+                        unsigned int *mask, uint8_t n_indexes)
 {
     if (cache[index].lock == 0) {
         cache[index].tag = tag;

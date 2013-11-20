@@ -4,7 +4,7 @@
 #include "cache.h"
 
 // Main cache lookup function
-static uint8_t lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
+static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
                           unsigned int *mask, uint8_t n_indexes)
 {
     uint32_t i, unlocked_cnt=0, min_r_field=UINT32_MAX, lfu_idx=0;
@@ -63,27 +63,18 @@ static uint8_t lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
 
 
 /*****************************************************************************/
-// Cache operations for LRU
+// Cache operations for LFU
 
-static void invalidate_lfu(cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    cache[index].valid = 0;
-    cache[index].lock = 0;
-    
-    // TODO - rfield = 0
-}
-
-static void hit_invalidate_lfu(cache_item_t *cache, uint32_t index, uint32_t tag)
+static void
+hit_invalidate_lfu (cache_item_t *cache, uint32_t index, uint32_t tag,
+                    unsigned int *mask, uint8_t n_indexes)
 {
 
 }
 
-static uint8_t fill_line_lfu(cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    return 0;
-}
-
-static void fetch_lock_lfu(cache_item_t *cache, uint32_t index, uint32_t tag)
+static void
+fetch_lock_lfu (cache_item_t *cache, uint32_t index, uint32_t tag,
+                unsigned int *mask, uint8_t n_indexes)
 {
     
 }
@@ -94,8 +85,8 @@ static void fetch_lock_lfu(cache_item_t *cache, uint32_t index, uint32_t tag)
 
 cache_interface_t interface_lfu = {
     .lookup         = lookup_lfu,
-    .invalidate     = invalidate_lfu,
+    .invalidate     = simple_invalidate,
     .hit_invalidate = hit_invalidate_lfu,
-    .fill_line      = fill_line_lfu,
+    .fill_line      = lookup_lfu,
     .fetch_lock     = fetch_lock_lfu
 };

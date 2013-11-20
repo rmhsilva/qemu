@@ -12,7 +12,7 @@ static inline uint8_t random_number(uint8_t n_indexes)
 
 
 // Main cache lookup function
-static uint8_t lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
+static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
                           unsigned int *mask, uint8_t n_indexes)
 {
     uint32_t i, unlocked_cnt=0;
@@ -85,27 +85,18 @@ static uint8_t lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
 
 
 /*****************************************************************************/
-// Cache operations for LRU
+// Cache operations for Rand
 
-static void invalidate_rnd(cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    cache[index].valid = 0;
-    cache[index].lock = 0;
-    
-    // TODO - rfield = 0
-}
-
-static void hit_invalidate_rnd(cache_item_t *cache, uint32_t index, uint32_t tag)
+static void
+hit_invalidate_rnd (cache_item_t *cache, uint32_t index, uint32_t tag,
+                    unsigned int *mask, uint8_t n_indexes)
 {
 
 }
 
-static uint8_t fill_line_rnd(cache_item_t *cache, uint32_t index, uint32_t tag)
-{
-    return 0;
-}
-
-static void fetch_lock_rnd(cache_item_t *cache, uint32_t index, uint32_t tag)
+static void
+fetch_lock_rnd (cache_item_t *cache, uint32_t index, uint32_t tag,
+                unsigned int *mask, uint8_t n_indexes)
 {
     
 }
@@ -116,8 +107,8 @@ static void fetch_lock_rnd(cache_item_t *cache, uint32_t index, uint32_t tag)
 
 cache_interface_t interface_rnd = {
     .lookup         = lookup_rnd,
-    .invalidate     = invalidate_rnd,
+    .invalidate     = simple_invalidate,
     .hit_invalidate = hit_invalidate_rnd,
-    .fill_line      = fill_line_rnd,
+    .fill_line      = lookup_rnd,
     .fetch_lock     = fetch_lock_rnd
 };
