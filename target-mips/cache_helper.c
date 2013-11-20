@@ -42,7 +42,7 @@ static inline uint8_t check_cached_region(target_ulong addr)
 /*static int i_cnt = 0, d_cnt = 0, l2_cnt = 0;*/
 
 #if !defined(CONFIG_USER_ONLY)
-static uint8_t asid, asid_prev;
+//static uint8_t asid, asid_prev;
 #endif
 
 /*****************************************************************************/
@@ -77,11 +77,11 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 /*    }*/
 
 #if !defined(CONFIG_USER_ONLY)
-    asid = env->CP0_EntryHi & 0xFF;
-    if (asid_prev != asid) {
-        asid_prev = asid;
-        printf("******** new ASID: %u\n", asid);
-    }
+   // asid = env->CP0_EntryHi & 0xFF;
+   // if (asid_prev != asid) {
+   //     asid_prev = asid;
+   //     printf("******** new ASID: %u\n", asid);
+   // }
 #endif
 
     int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
@@ -196,7 +196,6 @@ void helper_dcache_st(CPUMIPSState *env, target_ulong addr) {
 #define HELPER_INVALIDATE(type)                                                \
 void helper_cache_invalidate_ ## type (CPUMIPSState *env, unsigned int addr)   \
 {                                                                              \
-    printf("******** bzzzzap! Cache op 0 called\n");                           \
     (*env->cache->type##cache_api->invalidate)(env->cache->type##cache,        \
         DECODE_INDEX_WAY_ ## type (addr), DECODE_TAG_ ## type (addr));         \
 }
@@ -210,7 +209,6 @@ HELPER_INVALIDATE(l2)
 #define HELPER_LOAD_TAG(type)                                                  \
 void helper_cache_load_tag_ ## type (CPUMIPSState *env, unsigned int addr)     \
 {                                                                              \
-    printf("******** bzzzzap! Cache op 1 called\n");                           \
     env->CP0_TagLo = env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].tag;\
 }
 HELPER_LOAD_TAG(i)
@@ -221,7 +219,6 @@ HELPER_LOAD_TAG(l2)
 #define HELPER_STORE_TAG(type)                                                 \
 void helper_cache_store_tag_ ## type (CPUMIPSState *env, unsigned int addr)    \
 {                                                                              \
-    printf("******** bzzzzap! Cache op 2 called\n");                           \
     env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].tag = env->CP0_TagLo;\
     env->cache->type##cache[DECODE_INDEX_WAY_ ## type (addr)].lock = 0;        \
 }
@@ -233,7 +230,6 @@ HELPER_STORE_TAG(l2)
 #define HELPER_HIT_INVALIDATE(type)                                            \
 void helper_cache_hit_invalidate_ ## type(CPUMIPSState *env, unsigned int addr)\
 {                                                                              \
-    printf("******** bzzzzap! Cache op 4 called\n");                           \
     (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
         mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
@@ -248,7 +244,6 @@ HELPER_HIT_INVALIDATE(l2)
 #define HELPER_FILL_LINE(type)                                                 \
 void helper_cache_fill_ ## type(CPUMIPSState *env, unsigned int addr)          \
 {                                                                              \
-    printf("******** bzzzzap! Cache op 5 called\n");                           \
     (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
         mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
@@ -267,7 +262,6 @@ void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr) {
 #define HELPER_FETCH_LOCK(type)                                                \
 void helper_cache_fetch_lock_ ## type(CPUMIPSState *env, unsigned int addr)    \
 {                                                                              \
-    printf("******** bzzzzap! Cache op 7 called\n");                           \
     (*env->cache->type##cache_api->fetch_lock)(env->cache->type##cache,        \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
         mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
