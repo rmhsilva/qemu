@@ -46,7 +46,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
 /*            fprintf(stderr,"Invalid: %u %u\n",tag,i);*/
             lines[i]->tag = tag;
             lines[i]->valid = 1;
-            return 1;
+            return -1;
         }
     }
     rnd_no = random_number(n_indexes);
@@ -80,7 +80,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
 /*            fprintf(stderr,"New no needed\n");*/
         } while(1);
     }
-    return 1;
+    return -1;
 }
 
 

@@ -45,7 +45,7 @@ static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
             lines[i]->tag = tag;
             lines[i]->valid = 1;
             lines[i]->r_field = 0;
-            return 1;
+            return -1;
         }
     }
 
@@ -58,7 +58,7 @@ static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
         lines[lfu_idx]->valid = 1;
         lines[lfu_idx]->r_field = 0;
     }
-    return 1;
+    return -1;
 }
 
 
