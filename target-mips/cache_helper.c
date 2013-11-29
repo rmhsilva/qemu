@@ -76,18 +76,11 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 /*        log_icache(0);*/
 /*    }*/
 
-#if !defined(CONFIG_USER_ONLY)
-   // asid = env->CP0_EntryHi & 0xFF;
-   // if (asid_prev != asid) {
-   //     asid_prev = asid;
-   //     printf("******** new ASID: %u\n", asid);
-   // }
-#endif
-
     int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
                         mips_cache_opts.i_ways);
 
+    // Check for hit / miss
     if (miss_l1 != -1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
     }
@@ -99,12 +92,12 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 /*                l2_cnt = 0;*/
 /*                log_l2cache(0);*/
 /*            }*/
-
             idx_l2 = DECODE_INDEX_l2(phys_address);
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         mips_cache_opts.l2_ways);
+
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -115,7 +108,8 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 
 
 /**
- * This is called by the two d-cache helpers:
+ * This is called by the two d-cache helpers
+ * if is_load is 0 then it is a store instruction
  */
 static inline void 
 helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load) 
@@ -126,8 +120,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     }
 #endif
 
-    /* if is_load is 0 then it is a store instruction */
-#ifndef CONFIG_USER_ONLY 
+#ifndef CONFIG_USER_ONLY
     hwaddr phys_address = (hwaddr)get_phys_addr_cache(env, addr);
 #else
     hwaddr phys_address = (hwaddr)addr;
@@ -147,9 +140,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     int miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
                         mips_cache_opts.d_ways);
-    
-    // TODO: dirty bit etc for write-back?
-    
+
     if (miss_l1 != -1) {
         if (is_load)
             mips_cache_opts.d_ld_hit_cnt[idx_l1]++;
@@ -167,12 +158,12 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
 /*                l2_cnt = 0;*/
 /*                log_l2cache(0);*/
 /*            }*/
-
             idx_l2 = DECODE_INDEX_l2(phys_address);
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
                         mips_cache_opts.l2_ways);
+
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else

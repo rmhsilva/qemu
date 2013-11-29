@@ -747,12 +747,11 @@ static void mvp_init (CPUMIPSState *env, const mips_def_t *def)
 
 static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
-
     //pass seed to random number generator
     srand(time(NULL));
   
     if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
-      printf("Initialising cache... ");
+        printf("Initialising cache... ");
     
     // allocate the cache context memory...
     env->cache = (CPUCacheContext *)g_malloc0(sizeof(CPUCacheContext));
@@ -762,7 +761,6 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
         env->cache->icache =
             (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.i_no_of_lines);
         SWITCH_FUNCTION(i);
-        // TODO: add replacement algo choice to command lines
     }
 
     if (mips_cache_opts.use_d) {
