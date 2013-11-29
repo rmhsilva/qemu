@@ -20,9 +20,9 @@
 #include "qemu-common.h"
 
 struct MipsCacheOpts {
-    char d_opt[16];
-    char i_opt[16];
-    char l2_opt[16];
+    char d_opt[20];
+    char i_opt[20];
+    char l2_opt[20];
 
     unsigned char transparent_cache;
     unsigned char onchip_l2;
@@ -34,7 +34,9 @@ struct MipsCacheOpts {
     unsigned char use_d;
     unsigned char d_replacement;
     unsigned char d_way_width;
+    unsigned int d_ways;
     unsigned int d_no_of_lines;
+    unsigned int d_lines_per_way;
     unsigned int d_offset_width;
     unsigned int d_index_width;
     unsigned int d_index_mask;
@@ -42,7 +44,9 @@ struct MipsCacheOpts {
     unsigned char use_i;
     unsigned char i_replacement;
     unsigned char i_way_width;
+    unsigned int i_ways;
     unsigned int i_no_of_lines;
+    unsigned int i_lines_per_way;
     unsigned int i_offset_width;
     unsigned int i_index_width;
     unsigned int i_index_mask;
@@ -50,7 +54,9 @@ struct MipsCacheOpts {
     unsigned char use_l2;
     unsigned char l2_replacement;
     unsigned char l2_way_width;
+    unsigned int l2_ways;
     unsigned int l2_no_of_lines;
+    unsigned int l2_lines_per_way;
     unsigned int l2_offset_width;
     unsigned int l2_index_width;
     unsigned int l2_index_mask;

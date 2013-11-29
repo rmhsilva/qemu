@@ -36,12 +36,14 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 #else
     unsigned char *replacement;
     unsigned char *way_width;
+    unsigned int *ways;
     unsigned int **way_mask;
     unsigned int *no_of_lines;
     /* offset width includes bits used to address bytes in a word */
     unsigned int *offset_width;
     unsigned int *index_width;
     unsigned int *index_mask;
+    unsigned int *lines_per_way;
     unsigned int tmp0, tmp1, tmp3;
     char tmp2[5], tmp4[5];
     int opt_len;
@@ -50,12 +52,14 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* D-cache */
     if(which_cache == 'd')
     {
-        pstrcpy(mips_cache_opts.d_opt,15,arg);
+        pstrcpy(mips_cache_opts.d_opt,19,arg);
         mips_cache_opts.use_d = 1; 
         replacement = &mips_cache_opts.d_replacement;
         way_width = &mips_cache_opts.d_way_width;
+        ways = &mips_cache_opts.d_ways;
         way_mask = &mips_cache_opts.d_way_mask;
         no_of_lines = &mips_cache_opts.d_no_of_lines;
+        lines_per_way = &mips_cache_opts.d_lines_per_way;
         offset_width = &mips_cache_opts.d_offset_width;
         index_width = &mips_cache_opts.d_index_width;
         index_mask = &mips_cache_opts.d_index_mask;
@@ -63,12 +67,14 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* I-cache */
     else if(which_cache == 'i')
     {
-        pstrcpy(mips_cache_opts.i_opt,15,arg);
+        pstrcpy(mips_cache_opts.i_opt,19,arg);
         mips_cache_opts.use_i = 1;
         replacement = &mips_cache_opts.i_replacement;
         way_width = &mips_cache_opts.i_way_width;
+        ways = &mips_cache_opts.i_ways;
         way_mask = &mips_cache_opts.i_way_mask;
         no_of_lines = &mips_cache_opts.i_no_of_lines;
+        lines_per_way = &mips_cache_opts.i_lines_per_way;
         offset_width = &mips_cache_opts.i_offset_width;
         index_width = &mips_cache_opts.i_index_width;
         index_mask = &mips_cache_opts.i_index_mask;
@@ -76,12 +82,14 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     /* L2-cache */
     else if(which_cache == 'u')
     {
-        pstrcpy(mips_cache_opts.l2_opt,15,arg);
+        pstrcpy(mips_cache_opts.l2_opt,19,arg);
         mips_cache_opts.use_l2 = 1; 
         replacement = &mips_cache_opts.l2_replacement;
         way_width = &mips_cache_opts.l2_way_width;
+        ways = &mips_cache_opts.l2_ways;
         way_mask = &mips_cache_opts.l2_way_mask;
         no_of_lines = &mips_cache_opts.l2_no_of_lines;
+        lines_per_way = &mips_cache_opts.l2_lines_per_way;
         offset_width = &mips_cache_opts.l2_offset_width;
         index_width = &mips_cache_opts.l2_index_width;
         index_mask = &mips_cache_opts.l2_index_mask;
@@ -216,6 +224,8 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
             "*** Error: Unrecognised type of %c-cache\n",which_cache);
         return 1;       
     }
+    //calculate number of ways
+    *ways = 1 << *way_width;
 
     /* Check replacement algorithm */
     if(opt_len == 3) { /* No replacement passed */
@@ -241,22 +251,25 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
         fprintf(stderr,
             "*** Error: Unrecognised replacement algorithm of %c-cache\n",which_cache);
         return 1;       
-    }   
+    } 
+
+    //obtain number of lines per way
+    *lines_per_way =  *no_of_lines >> *way_width;
 
     // Allocate memory for hit/miss counters
     if (which_cache == 'd') {
-        mips_cache_opts.d_ld_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.d_ld_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.d_st_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.d_st_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.d_ld_hit_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
+        mips_cache_opts.d_ld_miss_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
+        mips_cache_opts.d_st_hit_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
+        mips_cache_opts.d_st_miss_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
     }
     else if (which_cache == 'i') {
-        mips_cache_opts.i_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.i_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.i_hit_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
+        mips_cache_opts.i_miss_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
     }
     else if (which_cache == 'u') {
-        mips_cache_opts.l2_hit_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
-        mips_cache_opts.l2_miss_cnt = (uint64_t *)calloc(*no_of_lines, sizeof(uint64_t));
+        mips_cache_opts.l2_hit_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
+        mips_cache_opts.l2_miss_cnt = (uint64_t *)calloc(*lines_per_way, sizeof(uint64_t));
     }
 
 
@@ -272,12 +285,13 @@ void log_icache(char verbose) {
     int i;
     char fname[60] = "log-icache-";
     pstrcat(fname, 60, mips_cache_opts.i_opt);
+    pstrcat(fname, 60, ".csv");
     FILE *fd = fopen(fname, "w");
 
     if (fd) {
         if (verbose) printf("Logging icache data (%s)\n", fname);
 
-        for (i=0; i<mips_cache_opts.i_no_of_lines; i++) {
+        for (i=0; i<mips_cache_opts.i_lines_per_way; i++) {
             fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
                 mips_cache_opts.i_hit_cnt[i], mips_cache_opts.i_miss_cnt[i]);
         }
@@ -293,12 +307,13 @@ void log_dcache(char verbose) {
     int i;
     char fname[60] = "log-dcache-";
     pstrcat(fname, 60, mips_cache_opts.d_opt);
+    pstrcat(fname, 60, ".csv");
     FILE *fd = fopen(fname, "w");
 
     if (fd) {
         if (verbose) printf("Logging dcache data (%s)\n", fname);
 
-        for (i=0; i<mips_cache_opts.d_no_of_lines; i++) {
+        for (i=0; i<mips_cache_opts.d_lines_per_way; i++) {
             fprintf(fd, "%d,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n", i,
                 mips_cache_opts.d_st_hit_cnt[i], mips_cache_opts.d_st_miss_cnt[i],
                 mips_cache_opts.d_ld_hit_cnt[i], mips_cache_opts.d_ld_miss_cnt[i]);
@@ -315,12 +330,13 @@ void log_l2cache(char verbose) {
     int i;
     char fname[60] = "log-l2cache-";
     pstrcat(fname, 60, mips_cache_opts.l2_opt);
+    pstrcat(fname, 60, ".csv");
     FILE *fd = fopen(fname, "w");
 
     if (fd) {
         if (verbose) printf("Logging L2 cache data (%s)\n", fname);
 
-        for (i=0; i<mips_cache_opts.l2_no_of_lines; i++) {
+        for (i=0; i<mips_cache_opts.l2_lines_per_way; i++) {
             fprintf(fd, "%d,%"PRIu64",%"PRIu64"\n", i,
                 mips_cache_opts.l2_hit_cnt[i], mips_cache_opts.l2_miss_cnt[i]);
         }

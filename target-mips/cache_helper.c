@@ -86,7 +86,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 
     int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
-                        (1<<mips_cache_opts.i_way_width));  // TODO: set const shift
+                        mips_cache_opts.i_ways);
 
     if (miss_l1 != -1) {
         mips_cache_opts.i_hit_cnt[idx_l1]++;
@@ -104,7 +104,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
-                        (1<<mips_cache_opts.l2_way_width));
+                        mips_cache_opts.l2_ways);
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -146,7 +146,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
 
     int miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
-                        (1<<mips_cache_opts.d_way_width));
+                        mips_cache_opts.d_ways);
     
     // TODO: dirty bit etc for write-back?
     
@@ -172,7 +172,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
-                        (1<<mips_cache_opts.l2_way_width));
+                        mips_cache_opts.l2_ways);
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
             else
@@ -232,7 +232,7 @@ void helper_cache_hit_invalidate_ ## type(CPUMIPSState *env, unsigned int addr)\
 {                                                                              \
     (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
-        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
+        mips_cache_opts.type ## _way_mask, mips_cache_opts.type ## _ways); \
 }
 HELPER_HIT_INVALIDATE(i)
 HELPER_HIT_INVALIDATE(d)
@@ -246,7 +246,7 @@ void helper_cache_fill_ ## type(CPUMIPSState *env, unsigned int addr)          \
 {                                                                              \
     (*env->cache->type##cache_api->hit_invalidate)(env->cache->type##cache,    \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
-        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
+        mips_cache_opts.type ## _way_mask, mips_cache_opts.type ## _ways); \
 }
 HELPER_FILL_LINE(d)
 HELPER_FILL_LINE(l2)
@@ -256,7 +256,7 @@ void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr) {
     // I-Cache is the only cache with an actual fill instruction
     (*env->cache->icache_api->fill_line)(env->cache->icache,
         DECODE_INDEX_i(addr), DECODE_TAG_i(addr),
-        mips_cache_opts.i_way_mask, (1<<mips_cache_opts.i_way_width));
+        mips_cache_opts.i_way_mask, mips_cache_opts.i_ways);
 }
 
 #define HELPER_FETCH_LOCK(type)                                                \
@@ -264,7 +264,7 @@ void helper_cache_fetch_lock_ ## type(CPUMIPSState *env, unsigned int addr)    \
 {                                                                              \
     (*env->cache->type##cache_api->fetch_lock)(env->cache->type##cache,        \
         DECODE_INDEX_ ## type (addr), DECODE_TAG_ ## type (addr),              \
-        mips_cache_opts.type ## _way_mask, (1<<mips_cache_opts.type ## _way_width)); \
+        mips_cache_opts.type ## _way_mask, mips_cache_opts.type ## _ways); \
 }
 HELPER_FETCH_LOCK(i)
 HELPER_FETCH_LOCK(d)
