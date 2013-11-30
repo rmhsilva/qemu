@@ -73,6 +73,8 @@ struct MipsCacheOpts {
     uint64_t *i_miss_cnt;
     uint64_t *l2_hit_cnt;
     uint64_t *l2_miss_cnt;
+
+    uint64_t tlb_error_cnt;
 };
 
 

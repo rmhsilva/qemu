@@ -365,6 +365,10 @@ void log_cache_data(void)
     if (mips_cache_opts.use_d) {
         log_dcache(1);
 
+        if (mips_cache_opts.tlb_error_cnt) {
+            printf("Number of TLB errors: %"PRIu64"\n", mips_cache_opts.tlb_error_cnt);
+        }
+
         free(mips_cache_opts.d_ld_hit_cnt);
         free(mips_cache_opts.d_st_hit_cnt);
         free(mips_cache_opts.d_ld_miss_cnt);

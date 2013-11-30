@@ -126,6 +126,12 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     hwaddr phys_address = (hwaddr)addr;
 #endif
 
+    if (phys_address == -1) {
+        // printf("Error in Physical Address lookup, %x\n", addr);
+        mips_cache_opts.tlb_error_cnt += 1;
+        return;
+    }
+
     uint32_t idx_l1 = DECODE_INDEX_d(addr);
     uint32_t tag_l1 = DECODE_TAG_d(phys_address);
     uint32_t idx_l2, tag_l2;
