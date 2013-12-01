@@ -2240,7 +2240,7 @@ static void gen_shift_imm(DisasContext *ctx, uint32_t opc,
 
 /* Cache operations */
 static void gen_cache_op(DisasContext *ctx, uint32_t opc, 
-                            int op, int base, int16_t offset)
+                         int op, int base, int16_t offset)
 {
     // Calculate index
     TCGv t0 = tcg_temp_new();
@@ -2266,6 +2266,7 @@ static void gen_cache_op(DisasContext *ctx, uint32_t opc,
         default:
         break;
     }
+    tcg_temp_free(t0);
 }
 /**GDP**/
 
