@@ -41,7 +41,7 @@ static int lookup_lru(cache_item_t *cache, uint32_t index, uint32_t tag,
         if (lines[i]->valid == 1) {  /* Line valid... */
             if (lines[i]->tag == tag) {  /* ... and correct tag */
                 lru_update(lines, i, n_indexes);
-                *idx_used = i;
+                *idx_used = index | mask[i];
                 return 0;
             }
             else if (!lines[i]->lock) {  /* ... and wrong tag and unlocked */
@@ -61,7 +61,7 @@ static int lookup_lru(cache_item_t *cache, uint32_t index, uint32_t tag,
             lines[i]->tag = tag;
             lines[i]->valid = 1;
             lru_update(lines, i, n_indexes);
-            *idx_used = i;
+            *idx_used = index | mask[i];
             return -1;
         }
     }
@@ -73,7 +73,7 @@ static int lookup_lru(cache_item_t *cache, uint32_t index, uint32_t tag,
         lines[lru_idx]->tag = tag;
         lines[lru_idx]->valid = 1;
         lru_update(lines, lru_idx, n_indexes);
-        *idx_used = lru_idx;
+        *idx_used = index | mask[lru_idx];
     }
     return -1;
 }

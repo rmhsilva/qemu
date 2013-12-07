@@ -24,7 +24,7 @@ static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
         if (lines[i]->valid == 1) {  /* Line valid... */
             if (lines[i]->tag == tag) {  /* ... and correct tag */
                 lines[i]->r_field++;
-                *idx_used = i;
+                *idx_used = index | mask[i];
                 return 0;
             }
             else if (!lines[i]->lock) {  /* ... and wrong tag and unlocked */
@@ -44,7 +44,7 @@ static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
             lines[i]->tag = tag;
             lines[i]->valid = 1;
             lines[i]->r_field = 0;
-            *idx_used = i;
+            *idx_used = index | mask[i];
             return -1;
         }
     }
@@ -56,7 +56,7 @@ static int lookup_lfu(cache_item_t *cache, uint32_t index, uint32_t tag,
         lines[lfu_idx]->tag = tag;
         lines[lfu_idx]->valid = 1;
         lines[lfu_idx]->r_field = 0;
-        *idx_used = lfu_idx;
+        *idx_used = index | mask[lfu_idx];
     }
     return -1;
 }

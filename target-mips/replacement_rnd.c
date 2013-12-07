@@ -26,7 +26,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
     for (i=0; i<n_indexes; i++) {
         if (lines[i]->valid == 1) {  /* Line valid... */
             if (lines[i]->tag == tag) {  /* ... and correct tag */
-                *idx_used = i;
+                *idx_used = index | mask[i];
                 return 0;
             }
             else if (!lines[i]->lock) {  /* ... and wrong tag and unlocked */
@@ -41,7 +41,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
             }  /* ...and unlocked */
             lines[i]->tag = tag;
             lines[i]->valid = 1;
-            *idx_used = i;
+            *idx_used = index | mask[i];
             return -1;
         }
     }
@@ -49,7 +49,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
     if (unlocked_cnt == n_indexes) {  /* All lines valid and all unlocked */
         lines[rnd_no]->tag = tag;
         lines[rnd_no]->valid = 1;
-        *idx_used = rnd_no;
+        *idx_used = index | mask[rnd_no];
     }
     else if(unlocked_cnt == 0){
         printf("All cache lines locked for index %x\n", index);
@@ -57,7 +57,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
     else if(unlocked_cnt == 1){ /* Only one line unlocked */
         lines[unlocked_lines[0]]->tag = tag;
         lines[unlocked_lines[0]]->valid = 1;
-        *idx_used = unlocked_lines[0];
+        *idx_used = index | mask[unlocked_lines[0]];
     }
     else {  /* All lines are valid and some are unlocked */
         do {
@@ -73,7 +73,7 @@ static int lookup_rnd(cache_item_t *cache, uint32_t index, uint32_t tag,
                 break;
             rnd_no = random_number(n_indexes);
         } while(1);
-        *idx_used = rnd_no;
+        *idx_used = index | mask[rnd_no];
     }
     return -1;
 }

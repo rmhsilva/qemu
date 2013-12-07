@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "mips-cache-opts.h"
 
 /* Macros for displaying uint64t */
