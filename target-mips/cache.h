@@ -4,7 +4,7 @@
  */
 
 #ifndef GDP_CACHE
-#define GDP_CACHE value
+#define GDP_CACHE
 
 #ifdef TARGET_MIPS
 
@@ -49,15 +49,16 @@ typedef struct cache_interface_t cache_interface_t;
 struct cache_interface_t {
     /**
      * lookup: The main cache lookup function. 
-     * @param  *cache    Pointer to the cache to operate on
+     * @param *cache     Pointer to the cache to operate on
      * @param  index     Index of memory access
      * @param  tag       Tag of memory accessed
-     * @param  *mask     Index mask (for set-associative caches)
+     * @param *mask      Index mask (for set-associative caches)
      * @param  n_indexes Number of indexes (sets)
+     * @param *idx_used  In S.A. caches, this is set to the line that was used
      * @return           +ve: hit, -1: miss
      */
     int (*lookup)(cache_item_t *cache, uint32_t index, uint32_t tag,
-                    unsigned int *mask, uint8_t n_indexes);
+                  unsigned int *mask, uint8_t n_indexes, int *idx_used);
     /**
      * invalidate: mark a cache line as invalid and remove lock
      */
@@ -72,7 +73,7 @@ struct cache_interface_t {
      * @return       0: success, 1: error
      */
     int (*fill_line) (cache_item_t *cache, uint32_t index, uint32_t tag,
-                        unsigned int *mask, uint8_t n_indexes);
+                      unsigned int *mask, uint8_t n_indexes, int *idx_used);
     /**
      * fetch_lock: fill a cache line AND mark it as locked
      */
@@ -134,16 +135,19 @@ struct CPUCacheContext {
 // 'Default' (simple) cache operation functions
 void simple_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag);
 void simple_hit_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
-int simple_fill_line(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
+int simple_fill_line(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes, int *idx_used);
 void simple_fetch_lock(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
 
 // Direct Mapped cache lookup
 int lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
-                        unsigned int *mask, uint8_t n_indexes);
+                    unsigned int *mask, uint8_t n_indexes, int *idx_used);
 
 // Interface to the Direct Mapped functionality
 extern cache_interface_t interface_dm;
 
+
+// Associative caches share some functionality
+void assoc_hit_invalidate(cache_item_t *cache, uint32_t index, uint32_t tag, unsigned int *mask, uint8_t n_indexes);
 
 /*****************************************************************************/
 // Declare interfaces to the other replacement strategies we have

@@ -1,12 +1,13 @@
-/* GDP */
-/* File includes functions calculating offset and index widths */
-/* See allowed cache types and sizes at the end of this file */
+/**
+ * This file includes functions calculating offset and index widths
+ * and cache logging routines.
+ * GDP 17, 2013
+ */
 
 #include <string.h>
 #include <stdio.h>
-#include "qemu-common.h"
+#include <stdlib.h>
 #include "mips-cache-opts.h"
-#include "cpu.h"
 
 /* Macros for displaying uint64t */
 #define __STDC_FORMAT_MACROS
@@ -23,6 +24,7 @@
  * 4 - least frequently used (8'b00000100)
  * 6 - random (8'b00000110)
  */
+
 
 /*  GDP cache options struct MIPS  */
 struct MipsCacheOpts mips_cache_opts = {"","","",0};
@@ -552,6 +554,7 @@ unsigned int gdp_log2(unsigned int n)
     return tmp;  
 }
 
+
 void print_cache_info(char which_cache)
 {
     if(which_cache == 'd')
@@ -673,4 +676,3 @@ void print_cache_info(char which_cache)
 /*4x131072_tp_rep 8x65536_tp_rep 16x32768_tp_rep 32x16384_tp_rep*/
 /*4MB:*/
 /*4x262144_tp_rep 8x131072_tp_rep 16x65536_tp_rep 32x32768_tp_rep*/
-

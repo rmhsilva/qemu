@@ -18,8 +18,16 @@
 #define MIPS_CACHE_OPTS
 
 #include <inttypes.h>
-#include "qemu-common.h"
 #include "gnuplot_i.h"
+#include <stdint.h>
+
+#ifdef GDP17_TESTBENCH
+#include <glib.h>
+void pstrcpy(char *dest, int dest_buf_size, const char *src);
+char *pstrcat(char *buf, int buf_size, const char *s);
+#else
+#include "qemu-common.h"
+#endif
 
 struct MipsCacheOpts {
     char d_opt[20];
