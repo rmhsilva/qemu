@@ -4,8 +4,11 @@
 # This is the name of the Main C file (*without* .c extension)
 TARGET = runTests
 
-# These are objects in higher dir
-OBJECTS = cache.o mips-cache-opts.o replacement_lru.o replacement_lfu.o replacement_rnd.o
+# These are files containing tests
+TEST_OBJS = lru_access.o
+
+# These are files from the cache system
+SYS_OBJS = cache.o mips-cache-opts.o replacement_lru.o replacement_lfu.o replacement_rnd.o
 
 
 # Set up the C compiler flags
@@ -34,16 +37,20 @@ end:
 
 
 # Compile target
-$(TARGET): $(TARGET).o $(OBJECTS)
+$(TARGET): $(TARGET).o $(SYS_OBJS) $(TEST_OBJS)
 	@echo
 	@echo + Creating Target
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 
-$(TARGET).o: $(TARGET).c
+$(TARGET).o: $(TARGET).c $(TARGET).h
 	$(CC) -o $(TARGET).o -c $(TARGET).c $(CFLAGS)
 
-%.o : ../%.c
+$(TEST_OBJS): %.o: %.c $(TARGET).h
+	@echo + Creating Test
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+$(SYS_OBJS): %.o: ../%.c
 	@echo 
 	@echo + Creating object files
 	$(CC) -o $@ -c $< $(CFLAGS)
@@ -51,8 +58,6 @@ $(TARGET).o: $(TARGET).c
 clean:
 	@echo
 	@echo + Cleaning up
-	$(RM) $(OBJECTS)
-	$(RM) $(TARGET).o
-	$(RM) $(TARGET)
+	$(RM) *.o
 
 .PHONY : all begin end clean

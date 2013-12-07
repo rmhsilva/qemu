@@ -1,16 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
-#include <time.h>
-#include <glib.h>
-#include <assert.h>
-
-#include "../cache.h"
-#include "../mips-cache-opts.h"
-
-#define N_LINES 100
+/**
+ * Runs some tests!
+ *  1) Initialise the caches here.
+ *  2) Run some tests here, OR
+ *  3) Make the tests in another file, and declare them in runTests.h
+ *
+ * GDP 17, 2013
+ */
+#include "runTests.h"
 
 cache_item_t *icache;
 cache_item_t *dcache;
@@ -31,12 +27,13 @@ static void init_caches()
 }
 
 // Dumps the cache memory into a file
-static void dump_cache(const char *fname, cache_item_t *cache, int n_lines)
+void dump_cache(const char *fname, cache_item_t *cache, int n_lines)
 {
     int i;
     FILE *fd = fopen(fname, "w");
 
     if (fd) {
+        printf("Logging cache data to %s\n", fname);
         for (i = 0; i < n_lines; ++i) {
             fprintf(fd, "%d, %x, rfield: %d, lock: %d, valid: %d\n", 
                 i, cache[i].tag, (int)cache[i].r_field, (char)cache[i].lock, (char)cache[i].valid);
@@ -47,7 +44,7 @@ static void dump_cache(const char *fname, cache_item_t *cache, int n_lines)
 }
 
 // Prints a single line from a cache
-static void print_line(cache_item_t *cache, int line)
+void print_line(cache_item_t *cache, int line)
 {
     printf("line: %8x | tag: %x, r_field: %d, valid: %d, lock: %d\n", 
         line, cache[line].tag, cache[line].r_field, cache[line].valid, cache[line].lock);
@@ -59,7 +56,6 @@ static void print_line(cache_item_t *cache, int line)
  */
 int main(int argc, char const *argv[])
 {
-    int idx, tag, result, line;
     printf("Welcome to the cache module testing environment...\n");
 
     // Create some caches...
@@ -72,33 +68,12 @@ int main(int argc, char const *argv[])
     // print_cache_info('u');
 
     // Do stuff with them!
-    idx = 10; tag = 0xbeef8eef;
-    result = (*interface_lru.lookup)(icache, idx, tag,
-            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    print_line(icache, 10);
-    print_line(icache, 138);
-
-    result = (*interface_lru.lookup)(icache, idx, tag,
-            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    print_line(icache, 10);
-    print_line(icache, 138);
-
-    tag = 0x12345678;
-    result = (*interface_lru.lookup)(icache, idx, tag,
-            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    print_line(icache, 10);
-    print_line(icache, 138);
-
-    tag = 0xFFBBDDBB;
-    result = (*interface_lru.lookup)(icache, idx, tag,
-            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    print_line(icache, 10);
-    print_line(icache, 138);
+    do_lru_tests();
 
     // Dump the raw cache data
     dump_cache("icache-data.log", icache, mips_cache_opts.i_no_of_lines);
-    dump_cache("dcache-data.log", dcache, mips_cache_opts.d_no_of_lines);
-    dump_cache("l2cache-data.log", l2cache, mips_cache_opts.l2_no_of_lines);
+    // dump_cache("dcache-data.log", dcache, mips_cache_opts.d_no_of_lines);
+    // dump_cache("l2cache-data.log", l2cache, mips_cache_opts.l2_no_of_lines);
     return 0;
 }
 
