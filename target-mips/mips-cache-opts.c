@@ -228,7 +228,7 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
     *ways = 1 << *way_width;
 
     /* Check replacement algorithm */
-    if(opt_len == 3) { /* No replacement passed */
+    if(opt_len == 3 || *way_width== 0) { /* No replacement passed */
         if(!*way_width == 0) {/* not direct-mapped */
             fprintf(stderr,
                 "*** Error: Specify replacement algorithm of %c-cache\n",which_cache);
@@ -280,6 +280,109 @@ unsigned char proc_mips_cache_opt(char which_cache, const char *arg)
 
 ///////////////////////
 // Logging stuff:
+
+/* 'h' - icache hit */
+/* 'm' - icache miss */
+/* 's' - dcache hit store */
+/* 't' - dcache miss store */
+/* 'l' - dcache hit load */
+/* 'o' - dcache miss load */ 
+void gnuplot_create(char which_graph)
+{
+    switch(which_graph)
+    {
+        case 'h':
+          if(mips_cache_opts.gp_icache_hit == NULL)
+            mips_cache_opts.gp_icache_hit = gnuplot_init("lines",which_graph);
+        break;
+        case 'm':
+          if(mips_cache_opts.gp_icache_miss == NULL)
+            mips_cache_opts.gp_icache_miss = gnuplot_init("lines",which_graph);
+        break;
+        case 's':
+          if(mips_cache_opts.gp_dcache_sthit == NULL)
+            mips_cache_opts.gp_dcache_sthit = gnuplot_init("lines",which_graph);
+        break;
+        case 't':
+          if(mips_cache_opts.gp_dcache_stmiss == NULL)
+            mips_cache_opts.gp_dcache_stmiss = gnuplot_init("lines",which_graph);
+        break;
+        case 'l':
+          if(mips_cache_opts.gp_dcache_ldhit == NULL)
+            mips_cache_opts.gp_dcache_ldhit = gnuplot_init("lines",which_graph);
+        break;
+        case 'o':
+          if(mips_cache_opts.gp_dcache_ldmiss == NULL)
+            mips_cache_opts.gp_dcache_ldmiss = gnuplot_init("lines",which_graph);
+        break;   
+    }
+}
+
+static void gnuplot_setone(gnuplot_ctrl *gp,char *yrange,char *xrange,char *tt)
+{
+    gnuplot_cmd(gp, "unset autoscale xy");
+    //gnuplot_cmd(gp, "set xrange [0:512]");
+    gnuplot_cmd(gp, xrange);
+    gnuplot_cmd(gp, yrange);
+    gnuplot_cmd(gp, "set size square");
+    //gnuplot_cmd(gp, "set terminal wxt noraise title \"D-Cache\""); 
+    gnuplot_cmd(gp, tt);
+} 
+
+void gnuplot_setup(void)
+{
+    if(mips_cache_opts.gnuplot_max_y == 0)
+        mips_cache_opts.gnuplot_max_y = 1000000;
+    char yrange[80];
+    char xrange[80];
+    char term_title[120];
+    sprintf(yrange,"set yrange [0:%u]",mips_cache_opts.gnuplot_max_y);
+
+    if(mips_cache_opts.use_d)
+    {
+        sprintf(xrange,"set xrange [0:%u]",mips_cache_opts.d_lines_per_way);    
+        if(mips_cache_opts.gp_dcache_sthit != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"D-Cache Store Hits\"");
+            gnuplot_setone(mips_cache_opts.gp_dcache_sthit,yrange,xrange,term_title);
+        }
+        if(mips_cache_opts.gp_dcache_stmiss != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"D-Cache Store Misses\"");
+            gnuplot_setone(mips_cache_opts.gp_dcache_stmiss,yrange,xrange,term_title);
+        }
+        if(mips_cache_opts.gp_dcache_ldhit != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"D-Cache Load Hits\"");
+            gnuplot_setone(mips_cache_opts.gp_dcache_ldhit,yrange,xrange,term_title);
+        }
+        if(mips_cache_opts.gp_dcache_ldmiss != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"D-Cache Load Misses\"");
+            gnuplot_setone(mips_cache_opts.gp_dcache_ldmiss,yrange,xrange,term_title);
+        }
+    }
+    if(mips_cache_opts.use_i) 
+    {
+        sprintf(xrange,"set xrange [0:%u]",mips_cache_opts.i_lines_per_way);
+        if(mips_cache_opts.gp_icache_hit != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"I-Cache Hits\"");
+            gnuplot_setone(mips_cache_opts.gp_icache_hit,yrange,xrange,term_title);
+        }  
+        if(mips_cache_opts.gp_icache_miss != NULL)
+        {
+            sprintf(term_title,
+              "set terminal wxt noraise title \"I-Cache Misses\"");
+            gnuplot_setone(mips_cache_opts.gp_icache_miss,yrange,xrange,term_title);
+        }         
+    }
+}
 
 void log_icache(char verbose) {
     int i;
@@ -352,6 +455,13 @@ void log_l2cache(char verbose) {
 void log_cache_data(void)
 {
 #ifdef TARGET_MIPS
+    gnuplot_close(mips_cache_opts.gp_dcache_ldhit);
+    gnuplot_close(mips_cache_opts.gp_dcache_ldmiss);
+    gnuplot_close(mips_cache_opts.gp_dcache_sthit);
+    gnuplot_close(mips_cache_opts.gp_dcache_stmiss);
+    gnuplot_close(mips_cache_opts.gp_icache_hit);
+    gnuplot_close(mips_cache_opts.gp_icache_miss); 
+
     if (mips_cache_opts.use_i) {
         log_icache(1);
 
@@ -368,7 +478,6 @@ void log_cache_data(void)
         if (mips_cache_opts.tlb_error_cnt) {
             printf("Number of TLB errors: %"PRIu64"\n", mips_cache_opts.tlb_error_cnt);
         }
-
         free(mips_cache_opts.d_ld_hit_cnt);
         free(mips_cache_opts.d_st_hit_cnt);
         free(mips_cache_opts.d_ld_miss_cnt);

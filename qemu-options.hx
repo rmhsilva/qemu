@@ -3306,6 +3306,46 @@ Using -onchip_l2 option enables storing L2 cache configurations values into
 processor config registers. Caution: This option is suppressed by -transparent_cache.
 ETEXI
 
+DEF("gnuplot_cache", HAS_ARG, QEMU_OPTION_gnuplot_cache,
+    "-gnuplot_cache\n"
+    "                display live cache hit/miss count graph\n"
+                       "'h' - icache hit\n" 
+                       "'m' - icache miss\n" 
+                       "'s' - dcache hit store\n" 
+                       "'t' - dcache miss store\n" 
+                       "'l' - dcache hit load\n"
+                       "'o' - dcache miss load\n"
+    "Options can be joint together e.g. -gnuplot_cache shot\n",
+    QEMU_ARCH_MIPS)
+STEXI
+@item -gnuplot_cache
+@findex -gnuplot_cache
+Enable live hit/miss count display for L1 caches in gnuplot.
+Should be used together with -icache or -dcache. The available options are:
+@example
+'h' - instruction cache Hit count graph
+@end example
+@example
+'m' - instruction cache Miss count graph
+@end example
+@example
+'s' - data cache Store hit count graph
+@end example
+@example
+'t' - data cache sTore miss count graph
+@end example
+@example
+'l' - data cache Load hit count graph
+@end example
+@example
+'o' - data cache lOad miss count graph
+@end example
+Options can be joint together e.g.:
+@example
+ -gnuplot_cache shot
+@end example
+ETEXI
+
 HXCOMM GDP MIPS definitions end
 
 HXCOMM This is the last statement. Insert new options before this line!

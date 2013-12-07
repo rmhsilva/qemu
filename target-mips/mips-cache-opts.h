@@ -17,7 +17,9 @@
 #ifndef MIPS_CACHE_OPTS
 #define MIPS_CACHE_OPTS
 
+#include <inttypes.h>
 #include "qemu-common.h"
+#include "gnuplot_i.h"
 
 struct MipsCacheOpts {
     char d_opt[20];
@@ -75,6 +77,14 @@ struct MipsCacheOpts {
     uint64_t *l2_miss_cnt;
 
     uint64_t tlb_error_cnt;
+
+    gnuplot_ctrl *gp_dcache_ldhit;
+    gnuplot_ctrl *gp_dcache_ldmiss;
+    gnuplot_ctrl *gp_dcache_sthit;
+    gnuplot_ctrl *gp_dcache_stmiss;
+    gnuplot_ctrl *gp_icache_hit;
+    gnuplot_ctrl *gp_icache_miss;  
+    unsigned int gnuplot_max_y;    
 };
 
 
@@ -96,6 +106,9 @@ void log_cache_data(void);
 unsigned int gdp_log2(unsigned int n);
 
 void print_cache_info(char which_cache);
+
+void gnuplot_setup(void);
+void gnuplot_create(char which_graph);
 
 #endif
 

@@ -749,6 +749,7 @@ static void cache_init (CPUMIPSState *env, const mips_def_t *def)
 {
     //pass seed to random number generator
     srand(time(NULL));
+    gnuplot_setup();
   
     if(mips_cache_opts.use_d | mips_cache_opts.use_i | mips_cache_opts.use_l2)
         printf("Initialising cache... ");

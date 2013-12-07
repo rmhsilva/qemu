@@ -36,10 +36,9 @@ static inline uint8_t check_cached_region(target_ulong addr)
 }
 #endif
 
-#define I_LOG 2000
-#define D_LOG 2000
-#define L2_LOG 2000
-/*static int i_cnt = 0, d_cnt = 0, l2_cnt = 0;*/
+#define I_LOG 1000000
+#define D_LOG 200000
+static int dl_cnt = 0, ds_cnt = 0, i_cnt = 0;
 
 #if !defined(CONFIG_USER_ONLY)
 //static uint8_t asid, asid_prev;
@@ -70,11 +69,18 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
     uint32_t idx_l2, tag_l2;
     int miss_l2;
 
-/*    // Dump data periodically*/
-/*    if (i_cnt++ >= I_LOG) {*/
-/*        i_cnt = 0;*/
-/*        log_icache(0);*/
-/*    }*/
+    // Plot data periodically
+    if (i_cnt++ >= I_LOG) {
+        i_cnt = 0;
+        if(mips_cache_opts.gp_icache_hit != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_icache_hit,
+              mips_cache_opts.i_hit_cnt,mips_cache_opts.i_lines_per_way,
+              "I-cache hits",0);
+        if(mips_cache_opts.gp_icache_miss != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_icache_miss,
+              mips_cache_opts.i_miss_cnt,mips_cache_opts.i_lines_per_way,
+              "I-cache misses",0);     
+    }
 
     int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
@@ -137,11 +143,33 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
     uint32_t idx_l2, tag_l2;
     int miss_l2;
 
-/*    // Dump data periodically*/
-/*    if (d_cnt++ >= D_LOG) {*/
-/*        d_cnt = 0;*/
-/*        log_dcache(0);*/
-/*    }*/
+    // Plot load data periodically
+    if (dl_cnt++ >= D_LOG)
+    {
+        dl_cnt = 0;
+        if(mips_cache_opts.gp_dcache_ldhit != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_dcache_ldhit,
+              mips_cache_opts.d_ld_hit_cnt,mips_cache_opts.d_lines_per_way,
+              "D-cache load hits",0);
+        if(mips_cache_opts.gp_dcache_ldmiss != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_dcache_ldmiss,
+              mips_cache_opts.d_ld_miss_cnt,mips_cache_opts.d_lines_per_way,
+              "D-cache load misses",0);
+    }
+
+    // Plot store data periodically
+    if (ds_cnt++ >= D_LOG)
+    {
+        ds_cnt = 0;
+        if(mips_cache_opts.gp_dcache_sthit != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_dcache_sthit,
+              mips_cache_opts.d_st_hit_cnt,mips_cache_opts.d_lines_per_way,
+              "D-cache store hits",0);
+        if(mips_cache_opts.gp_dcache_stmiss != NULL)
+            gnuplot_plot_x(mips_cache_opts.gp_dcache_stmiss,
+              mips_cache_opts.d_st_miss_cnt,mips_cache_opts.d_lines_per_way,
+              "D-cache store misses",0);
+    }
 
     int miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 

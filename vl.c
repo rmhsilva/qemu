@@ -2845,6 +2845,8 @@ int main(int argc, char **argv, char **envp)
     const char *vga_model = "none";
     const char *pid_file = NULL;
     const char *incoming = NULL;
+    /* counter for gnuplot option */
+    int gpl_i = 0;
 #ifdef CONFIG_VNC
     int show_vnc_port = 0;
 #endif
@@ -3009,6 +3011,14 @@ int main(int argc, char **argv, char **envp)
                 enable_onchip_l2();
                 printf("QEMU, L2 cache changed to on-chip.\n");
                 break;
+
+            case QEMU_OPTION_gnuplot_cache:
+                for(gpl_i = 0; optarg[gpl_i] != '\0'; gpl_i++)
+                    gnuplot_create(optarg[gpl_i]);
+                break;
+
+
+/* End of GDP options */
 
             case QEMU_OPTION_M:
                 machine = machine_parse(optarg);
