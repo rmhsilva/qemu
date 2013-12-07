@@ -2860,12 +2860,6 @@ int main(int argc, char **argv, char **envp)
     const char *trace_events = NULL;
     const char *trace_file = NULL;
 
-    /*GDP argument test*/
-    for(i = 0; i < argc; i = i + 1)
-    {
-        fprintf(stderr,"Arg no %d %s \n",i,argv[i]);
-    }
-
     atexit(qemu_run_exit_notifiers);
     error_set_progname(argv[0]);
 
@@ -2984,10 +2978,7 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("dcache %s %u %u %u %d %d\n", mips_cache_opts.d_opt,
-                      mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
-                      mips_cache_opts.d_index_width,mips_cache_opts.d_way_width,
-                      mips_cache_opts.d_replacement); 
+                print_cache_info('d');
                 break;
 
             case QEMU_OPTION_icache:
@@ -2996,10 +2987,7 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("icache %s %u %u %u %d %d\n", mips_cache_opts.i_opt,
-                      mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
-                        mips_cache_opts.i_index_width,mips_cache_opts.i_way_width,
-                        mips_cache_opts.i_replacement);    
+                print_cache_info('i');    
                 break;
 
             case QEMU_OPTION_l2cache:
@@ -3008,20 +2996,18 @@ int main(int argc, char **argv, char **envp)
                     /* Error in processing option argument */
                     exit(1);
                 }
-                printf("icache %s %u %u %u %d %d\n", mips_cache_opts.l2_opt,
-                      mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
-                      mips_cache_opts.l2_index_width,mips_cache_opts.l2_way_width,
-                      mips_cache_opts.l2_replacement); 
+                print_cache_info('u');
                 break;
 
             case QEMU_OPTION_transparent_cache:
                 set_transparent_cache();
-                printf("Warning: Caches defined as transparent.\n");
-                printf("All cache ops are treated NOPs.\n");
+                printf("QEMU, warning: Caches defined as transparent.\n");
+                printf("QEMU, all cache ops are treated NOPs.\n");
                 break;
 
             case QEMU_OPTION_onchip_l2:
                 enable_onchip_l2();
+                printf("QEMU, L2 cache changed to on-chip.\n");
                 break;
 
             case QEMU_OPTION_M:

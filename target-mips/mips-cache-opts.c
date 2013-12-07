@@ -443,6 +443,94 @@ unsigned int gdp_log2(unsigned int n)
     return tmp;  
 }
 
+void print_cache_info(char which_cache)
+{
+    if(which_cache == 'd')
+    {
+        if(mips_cache_opts.use_d)
+        {
+            printf("QEMU, configured L1 data cache: ");
+            printf("%ukB, ", mips_cache_opts.d_no_of_lines *
+              (1 << mips_cache_opts.d_offset_width) / 1024);
+            printf("linesize %u bytes,\n", 1 << mips_cache_opts.d_offset_width);
+            if(mips_cache_opts.d_ways > 1)
+            {
+                printf("VIPT, %u-way, ", mips_cache_opts.d_ways);
+                if(mips_cache_opts.d_replacement == 2)
+                    printf("least recently used replacement.\n");
+                else if(mips_cache_opts.d_replacement == 4)
+                    printf("least frequently used replacement.\n");
+                else if(mips_cache_opts.d_replacement == 6)
+                    printf("random replacement.\n");
+            }
+            else
+            {
+                printf("direct-mapped.\n");
+            }            
+        }
+        else
+            printf("L1 data cache not present.\n");
+    }
+    else if(which_cache == 'i')
+    {
+        if(mips_cache_opts.use_i)
+        {
+            printf("QEMU, configured L1 instruction cache: ");
+            printf("%ukB, ", mips_cache_opts.i_no_of_lines *
+              (1 << mips_cache_opts.i_offset_width) / 1024);
+            printf("linesize %u bytes,\n", 1 << mips_cache_opts.i_offset_width);
+            if(mips_cache_opts.i_ways > 1)
+            {
+                printf("VIPT, %u-way, ", mips_cache_opts.i_ways);
+                if(mips_cache_opts.i_replacement == 2)
+                    printf("least recently used replacement.\n");
+                else if(mips_cache_opts.i_replacement == 4)
+                    printf("least frequently used replacement.\n");
+                else if(mips_cache_opts.i_replacement == 6)
+                    printf("random replacement.\n");
+            }
+            else
+            {
+                printf("direct-mapped.\n");
+            }
+        }
+        else
+            printf("L1 instruction cache not present.\n");
+
+    }
+
+    else if(which_cache == 'u')
+    {
+        if(mips_cache_opts.use_l2)
+        {
+            printf("QEMU, configured L2 unified cache: ");
+            printf("%ukB, ", mips_cache_opts.l2_no_of_lines *
+              (1 << mips_cache_opts.l2_offset_width) / 1024);
+            printf("linesize %u bytes,\n", 1 << mips_cache_opts.l2_offset_width);
+            if(mips_cache_opts.l2_ways > 1)
+            {
+                printf("PIPT, %u-way, ", mips_cache_opts.l2_ways);
+                if(mips_cache_opts.l2_replacement == 2)
+                    printf("least recently used replacement.\n");
+                else if(mips_cache_opts.l2_replacement == 4)
+                    printf("least frequently used replacement.\n");
+                else if(mips_cache_opts.l2_replacement == 6)
+                    printf("random replacement, ");
+            }
+            else
+            {
+                printf("direct-mapped, ");
+            }
+            if(mips_cache_opts.onchip_l2)
+                printf("on-chip.\n");
+            else
+                printf("off-chip.\n");  
+        }
+        else
+            printf("L2 unified cache not present.\n");
+    }
+}
+
 /* ------------------------------------------------------------------------- */
 /* Allowed cache types and sizes for dcache and icache:  */
 

@@ -95,6 +95,8 @@ void log_cache_data(void);
 
 unsigned int gdp_log2(unsigned int n);
 
+void print_cache_info(char which_cache);
+
 #endif
 
 
