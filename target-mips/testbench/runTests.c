@@ -17,6 +17,7 @@ cache_item_t *dcache;
 cache_item_t *l2cache;
 
 
+// Initialises the cache memory
 static void init_caches()
 {
     //pass seed to random number generator
@@ -29,7 +30,9 @@ static void init_caches()
         l2cache = (cache_item_t *)g_malloc0(sizeof(cache_item_t)*mips_cache_opts.l2_no_of_lines);
 }
 
-static void dump_cache(const char *fname, cache_item_t *cache, int n_lines) {
+// Dumps the cache memory into a file
+static void dump_cache(const char *fname, cache_item_t *cache, int n_lines)
+{
     int i;
     FILE *fd = fopen(fname, "w");
 
@@ -43,6 +46,17 @@ static void dump_cache(const char *fname, cache_item_t *cache, int n_lines) {
     else printf("Error opening cache dump file...\n");
 }
 
+// Prints a single line from a cache
+static void print_line(cache_item_t *cache, int line)
+{
+    printf("line: %8x | tag: %x, r_field: %d, valid: %d, lock: %d\n", 
+        line, cache[line].tag, cache[line].r_field, cache[line].valid, cache[line].lock);
+}
+
+
+/**
+ * Do all testing stuff in here
+ */
 int main(int argc, char const *argv[])
 {
     int idx, tag, result, line;
@@ -61,16 +75,25 @@ int main(int argc, char const *argv[])
     idx = 10; tag = 0xbeef8eef;
     result = (*interface_lru.lookup)(icache, idx, tag,
             mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    printf("result: %d, line: %d\n", result, line);
+    print_line(icache, 10);
+    print_line(icache, 138);
 
-    idx = 10; tag = 0xabcdef12;
     result = (*interface_lru.lookup)(icache, idx, tag,
             mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
-    printf("result: %d, line: %d\n", result, line);
+    print_line(icache, 10);
+    print_line(icache, 138);
 
+    tag = 0x12345678;
+    result = (*interface_lru.lookup)(icache, idx, tag,
+            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
+    print_line(icache, 10);
+    print_line(icache, 138);
 
-    (*interface_lru.lookup)(icache, idx, tag, mips_cache_opts.i_way_mask, 
-                            mips_cache_opts.i_ways, &line);
+    tag = 0xFFBBDDBB;
+    result = (*interface_lru.lookup)(icache, idx, tag,
+            mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &line);
+    print_line(icache, 10);
+    print_line(icache, 138);
 
     // Dump the raw cache data
     dump_cache("icache-data.log", icache, mips_cache_opts.i_no_of_lines);
