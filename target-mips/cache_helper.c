@@ -54,6 +54,7 @@ static int dl_cnt = 0, ds_cnt = 0, i_cnt = 0;
  */
 void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 {
+    int tmp;
 #ifdef UNCACHED_REGION
     if(check_cached_region(pc_addr)) {
         return;
@@ -86,7 +87,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 
     int miss_l1 = (*env->cache->icache_api->lookup)(env->cache->icache,
                         idx_l1, tag_l1, mips_cache_opts.i_way_mask, 
-                        mips_cache_opts.i_ways, NULL);
+                        mips_cache_opts.i_ways, &tmp);
 
 
     // Check for hit / miss
@@ -105,7 +106,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
-                        mips_cache_opts.l2_ways, NULL);
+                        mips_cache_opts.l2_ways, &tmp);
 
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
@@ -123,6 +124,7 @@ void helper_icache(CPUMIPSState *env, target_ulong pc_addr, unsigned int opcode)
 static inline void 
 helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load) 
 {
+    int tmp;
 #ifdef UNCACHED_REGION
     if(check_cached_region(addr)) {
         return;
@@ -176,7 +178,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
 
     int miss_l1 = (*env->cache->dcache_api->lookup)(env->cache->dcache,
                         idx_l1, tag_l1, mips_cache_opts.d_way_mask, 
-                        mips_cache_opts.d_ways, NULL);
+                        mips_cache_opts.d_ways, &tmp);
 
     if (miss_l1 != -1) {
         if (is_load)
@@ -199,7 +201,7 @@ helper_dcache (CPUMIPSState *env, target_ulong addr, int is_load)
             tag_l2 = DECODE_TAG_l2(phys_address);
             miss_l2 = (*env->cache->l2cache_api->lookup)(env->cache->l2cache,
                         idx_l2, tag_l2, mips_cache_opts.l2_way_mask, 
-                        mips_cache_opts.l2_ways, NULL);
+                        mips_cache_opts.l2_ways, &tmp);
 
             if (miss_l2 != -1)
                 mips_cache_opts.l2_hit_cnt[idx_l2]++;
@@ -281,10 +283,11 @@ HELPER_FILL_LINE(l2)
 #undef HELPER_FILL_LINE
 
 void helper_cache_fill_i(CPUMIPSState *env, unsigned int addr) {
+    int tmp;
     // I-Cache is the only cache with an actual fill instruction
     (*env->cache->icache_api->fill_line)(env->cache->icache,
         DECODE_INDEX_i(addr), DECODE_TAG_i(addr),
-        mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, NULL);
+        mips_cache_opts.i_way_mask, mips_cache_opts.i_ways, &tmp);
 }
 
 #define HELPER_FETCH_LOCK(type)                                                \
