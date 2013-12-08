@@ -9,6 +9,7 @@
 int lookup_cache_dm(cache_item_t *cache, uint32_t index, uint32_t tag,
                     unsigned int *mask, uint8_t n_indexes, int *idx_used)
 {
+    *idx_used = index;
     if(cache[index].tag == tag && cache[index].valid == 1)
         return 0;
     else {

@@ -21,8 +21,6 @@
 #include "helper.h"
 #include "cache.h"
 #include "mips-cache-opts.h"
-// TODO it would be nice to not need mips-cache-opts here...
-// Requires changing mips_cache_opts.xyz to env->cache->opts->xyz
 
 /* Macros for displaying uint64t */
 #define __STDC_FORMAT_MACROS
