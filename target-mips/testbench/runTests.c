@@ -64,8 +64,8 @@ int main(int argc, char const *argv[])
     // proc_mips_cache_opt('u', "4x16384_4w_rnd");
     init_caches();
     print_cache_info('i');
-    // print_cache_info('d');
-    // print_cache_info('u');
+    print_cache_info('d');
+    print_cache_info('u');
 
     // Do stuff with them!
     do_lru_tests();
