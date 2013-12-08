@@ -3307,10 +3307,7 @@ static void handle_arg_dcache(const char *arg)
         /* Error in processing option argument */
         exit(1);
     }
-    printf("dcache %s %u %u %u %d %d\n", mips_cache_opts.d_opt,
-          mips_cache_opts.d_offset_width, mips_cache_opts.d_no_of_lines,
-          mips_cache_opts.d_index_width,mips_cache_opts.d_way_width,
-          mips_cache_opts.d_replacement);
+    print_cache_info('d');
 }
 static void handle_arg_icache(const char *arg)
 {
@@ -3319,10 +3316,7 @@ static void handle_arg_icache(const char *arg)
         /* Error in processing option argument */
         exit(1);
     }
-    printf("icache %s %u %u %u %d %d\n", mips_cache_opts.i_opt,
-          mips_cache_opts.i_offset_width, mips_cache_opts.i_no_of_lines,
-            mips_cache_opts.i_index_width,mips_cache_opts.i_way_width,
-            mips_cache_opts.i_replacement);
+    print_cache_info('i');
 }
 static void handle_arg_l2cache(const char *arg)
 {
@@ -3331,10 +3325,7 @@ static void handle_arg_l2cache(const char *arg)
         /* Error in processing option argument */
         exit(1);
     }
-    printf("icache %s %u %u %u %d %d\n", mips_cache_opts.l2_opt,
-          mips_cache_opts.l2_offset_width, mips_cache_opts.l2_no_of_lines,
-          mips_cache_opts.l2_index_width,mips_cache_opts.l2_way_width,
-          mips_cache_opts.l2_replacement);
+    print_cache_info('u');
 }
 static void handle_arg_gnuplot(const char *arg)
 {
