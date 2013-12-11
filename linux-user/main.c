@@ -3557,7 +3557,7 @@ static const struct qemu_argument arg_table[] = {
     {"l2cache",    "QEMU_CACHE_L2",     true, handle_arg_l2cache,
      "nxm_tp_rep",           "choose L2 cache size, type and repl. algorithm"},
     {"gnuplot_cache",    "QEMU_CACHE_PLOT",     true, handle_arg_gnuplot,
-     "nxm_tp_rep",           "choose L2 cache size, type and repl. algorithm"},
+     "",           "plot live hit/miss graphs"},
 #endif
     {NULL, NULL, false, NULL, NULL, NULL}
 };
